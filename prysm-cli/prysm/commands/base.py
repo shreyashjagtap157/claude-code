@@ -22,7 +22,9 @@ class Command(ABC):
     @property
     def usage(self) -> str:
         """Usage string, defaults to /<name>."""
-        return f"/{self.name}"
+        # Strip leading '/' if name already includes it
+        name = self.name.lstrip("/")
+        return f"/{name}"
 
     @abstractmethod
     def execute(self, args: list[str], repl: Any) -> None:

@@ -9,6 +9,7 @@ from prysm.version import VERSION
 from prysm.config.paths import get_config_dir
 from prysm.config.loader import load_config
 from prysm.repl import PrysmREPL
+from prysm.system import SystemDetector
 
 logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
 
@@ -41,8 +42,16 @@ def main(config, model, runtime, plugin_dir, verbose, version):
     if runtime:
         cfg.runtime = runtime
 
+    # Detect system information
+    if verbose:
+        click.echo("Detecting system hardware...", err=True)
+    detector = SystemDetector()
+    system_info = detector.detect()
+    if verbose:
+        click.echo(f"  System: {system_info.summary}", err=True)
+
     # Start REPL
-    repl = PrysmREPL(config=cfg, verbose=verbose)
+    repl = PrysmREPL(config=cfg, system_info=system_info, verbose=verbose)
     try:
         repl.run()
     except KeyboardInterrupt:

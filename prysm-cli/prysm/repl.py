@@ -13,8 +13,12 @@ from prysm.version import VERSION
 from prysm.commands.base import CommandRegistry
 from prysm.commands.help_cmd import HelpCommand
 from prysm.commands.exit_cmd import ExitCommand
+from prysm.commands.provider_cmd import ProviderCommand
+from prysm.commands.runtime_cmd import RuntimeCommand
+from prysm.commands.model_cmd import ModelCommand
 from prysm.ui.renderer import UIRenderer
 from prysm.config.paths import get_config_dir
+from prysm.models.registry import ModelRegistry
 
 console = Console()
 
@@ -22,8 +26,9 @@ console = Console()
 class PrysmREPL:
     """Interactive REPL for Prysm."""
 
-    def __init__(self, config, verbose=False):
+    def __init__(self, config, system_info=None, verbose=False):
         self.config = config
+        self.system_info = system_info
         self.verbose = verbose
         self.running = True
 
@@ -33,6 +38,9 @@ class PrysmREPL:
         self.commands.register(HelpCommand(self))
         self.commands.register(exit_cmd)
         self.commands.register_alias("/quit", exit_cmd)
+        self.commands.register(ProviderCommand(self))
+        self.commands.register(RuntimeCommand(self, system_info=self.system_info))
+        self.commands.register(ModelCommand(self))
 
         # UI renderer
         self.ui = UIRenderer()
@@ -79,15 +87,36 @@ class PrysmREPL:
 
     def _show_banner(self):
         """Show the startup banner."""
+        # Build banner text
+        banner_lines = [
+            f"[bold cyan]───  P R Y S M  ───[/bold cyan]",
+            f"[italic]Your models. Your runtime. Your code.[/italic]",
+            "",
+            f"[dim]v{VERSION}[/dim]",
+        ]
+
+        # Add system info if available
+        if self.system_info:
+            banner_lines.append("")
+            gpu_str = self.system_info.gpu.summary if self.system_info.has_gpu else "[dim]No GPU[/dim]"
+            banner_lines.append(f"[dim]System: {self.system_info.os_name.title()} | {self.system_info.cpu_brand or 'CPU'} ({self.system_info.cpu_cores}C/{self.system_info.cpu_threads}T) | RAM {self.system_info.ram_total_gb:.0f} GB | {gpu_str}[/dim]")
+
+        # Check if there's a default model
+        model_registry = ModelRegistry()
+        default_model = model_registry.get_default()
+
+        banner_lines.append("")
+        if default_model:
+            banner_lines.append(f"[green]Default model: {default_model.name}[/green] ([dim]{default_model.provider}[/dim])")
+        else:
+            banner_lines.append("[yellow]No model loaded.[/yellow] Use [bold]/model list[/bold] to see available")
+            banner_lines.append("models, or [bold]/runtime detect[/bold] to check hardware.")
+
+        banner_lines.append("")
+        banner_lines.append("Type [bold]/help[/bold] for available commands.")
+
         banner = Panel(
-            Text.from_markup(
-                "[bold cyan]───  P R Y S M  ───[/bold cyan]\n"
-                "[italic]Your models. Your runtime. Your code.[/italic]\n\n"
-                f"[dim]v{VERSION}[/dim]\n\n"
-                "[yellow]No model loaded.[/yellow] Use [bold]/model list[/bold] to see available\n"
-                "models, or [bold]/runtime[/bold] to check recommended runtime.\n\n"
-                "Type [bold]/help[/bold] for available commands."
-            ),
+            Text.from_markup("\n".join(banner_lines)),
             title="Welcome",
             border_style="cyan",
         )
