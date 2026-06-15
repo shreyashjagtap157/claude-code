@@ -15,10 +15,11 @@
 | v1.2 | 2025-06-15 | Round 2 refinement: 4 expert personas (QA/Test Engineer, Technical Writer, Legal/Compliance Advisor, Database Engineer). Fixes: testing strategy, documentation improvements, licensing clarity, SQLite migrations, data integrity. |
 | v1.3 | 2025-06-15 | Codebase Audit & Upstream Sync Strategy: Audit of existing Claude Code plugins repository and upstream update tracking strategy. |
 | v2.0 | 2026-06-15 | Hybrid Architecture Pivot (Option C): Reconciled language & stack contradiction. Core CLI product implemented in Python (`prysm-cli`), with a TypeScript compatibility plugin (`prysm-compat-plugin`) running inside Claude Code bridging hooks and commands to the Python backend via IPC. |
+| v2.1 | 2026-06-15 | Code review fixes: Fixed duplicate section numbering, added missing `py-cpuinfo` dependency, fixed Phase 0 `prysm init` to be MVP-appropriate, added Phase 12 for TypeScript compat plugin implementation. |
 
 ---
 
-## 0. Exhaustive Codebase Audit (v1.3)
+## P0. Exhaustive Codebase Audit (v1.3)
 
 > **v1.3 Critical Reframing:** This project IS the existing Claude Code plugins repository — a TypeScript/Node.js ecosystem. The PRYSM plan must describe **modifications to this codebase**, not building a new Python project from scratch.
 
@@ -119,7 +120,7 @@ The existing codebase is **TypeScript/Node.js**. The PRYSM plan originally propo
 
 ---
 
-## 0A. Upstream Sync Strategy (v1.3)
+## P0A. Upstream Sync Strategy (v1.3)
 
 > **v1.3 Addition:** Claude Code releases **multiple times per week** with no formal API stability guarantees for plugins. The native app is closed-source and frequently changes plugin interfaces, hook contracts, and settings schemas. A robust upstream sync strategy is essential to avoid compatibility drift.
 
@@ -331,7 +332,7 @@ If Claude Code makes a fundamental breaking change to the plugin system:
 
 ---
 
-## 0. Implementation Readiness Assessment
+## P0B. Implementation Readiness Assessment
 
 | Aspect | Verdict | Confidence |
 |---|---|---|
@@ -674,6 +675,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+py-cpuinfo = [
+    "py-cpuinfo>=9.0.0",           # CPU brand, cores, features detection
+]
 cpu = [
     "llama-cpp-python>=0.3.0",     # Local GGUF inference (CPU)
 ]
@@ -702,7 +706,7 @@ development = [
 
 [project.scripts]
 prysm = "prysm.cli:main"
-prysm-migrate = "prysm.migrate:main"
+# prysm-migrate = "prysm.migrate:main"  # Deferred to Phase 11
 
 [tool.ruff]
 line-length = 100

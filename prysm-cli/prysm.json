@@ -1,0 +1,30 @@
+{
+  "$schema": "https://prysm.dev/config.json",
+  "model": "",
+  "runtime": "auto",
+  "ui": {
+    "theme": "auto",
+    "streaming": true,
+    "show_thinking": true,
+    "status_bar": true
+  },
+  "agent": {
+    "max_turns": 25,
+    "context_window": 8192,
+    "auto_summarize": true
+  },
+  "permissions": {
+    "ask": ["Bash"],
+    "deny": [],
+    "allow": [],
+    "bash_allowlist": []
+  },
+  "sandbox": {
+    "enabled": false,
+    "auto_allow_bash_if_sandboxed": false,
+    "allowed_domains": [],
+    "read_only_paths": [],
+    "max_bash_timeout": 30,
+    "max_bash_memory_mb": 512
+  }
+}
