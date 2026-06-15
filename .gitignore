@@ -1,2 +1,16 @@
 .DS_Store
 
+# Sync output logs
+sync-output*.log
+
+# AI agent internal state
+.nexus/
+.nexus-agent/
+.agents/
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/
