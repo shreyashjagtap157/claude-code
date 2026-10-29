@@ -44,7 +44,7 @@ test("rejects unrepresentable fields, blocks, malformed schemas and unsupported 
 });
 
 test("maps structured JSON schema only when configured as supported", () => {
-  const result = translateAnthropicRequest(request({ output_config: { format: { type: "json_schema", schema: { type: "object", properties: { ok: { type: "boolean" } } } } }), cfg);
+  const result = translateAnthropicRequest(request({ output_config: { format: { type: "json_schema", schema: { type: "object", properties: { ok: { type: "boolean" } } } } } }), cfg);
   assert.equal(result.request.response_format.type, "json_schema"); assert.equal(result.request.response_format.json_schema.strict, true);
 });
 
