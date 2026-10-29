@@ -40,7 +40,7 @@ test("rejects unrepresentable fields, blocks, malformed schemas and unsupported 
   assert.throws(() => translateAnthropicRequest(request({ extra_mystery: true }), cfg), /Unsupported Anthropic Messages field/); assert.throws(() => translateAnthropicRequest(request({ messages: [{ role: "user", content: [{ type: "audio", source: {} }] }] }), cfg), /unsupported Anthropic content block \"audio\"/);
   assert.throws(() => translateAnthropicRequest(request({ thinking: { type: "enabled", budget_tokens: 10 } }), cfg), /extended thinking cannot be mapped/); assert.throws(() => translateAnthropicRequest(request({ tools: [{ name: "bad name", input_schema: { type: "object" } }] }), cfg), /valid function name/);
   const noTools = loadConfig({ env: { ...baseEnv, OPENAI_COMPATIBLE_CAPABILITIES: "{}" }, cwd: "/no-env" }); assert.throws(() => translateAnthropicRequest(request({ tools: [{ name: "x", input_schema: { type: "object" } }] }), noTools), /tool-capable/);
-  assert.throws(() => translateAnthropicRequest(request({ output_config: { format: { type: "json_schema", schema: { type: "object" } } }), noTools), /Structured JSON output is disabled/); assert.throws(() => translateAnthropicRequest(request({ max_tokens: 0 }), cfg), GatewayError);
+  assert.throws(() => translateAnthropicRequest(request({ output_config: { format: { type: "json_schema", schema: { type: "object" } } } }), noTools), /Structured JSON output is disabled/); assert.throws(() => translateAnthropicRequest(request({ max_tokens: 0 }), cfg), GatewayError);
 });
 
 test("maps structured JSON schema only when configured as supported", () => {
