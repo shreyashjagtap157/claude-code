@@ -158,7 +158,7 @@ function assertCapabilityCombinations(modelMap, defaultModel, modelCapabilities,
       ...(modelCapabilities[requestedModel] || {})
     };
     if (combined.parallelToolCalls && !combined.toolCalling) {
-      throw new ConfigError(`Resolved capabilities for requested model ${JSON.stringify(requestedModel)} and upstream model ${JSON.stringify(upstreamModel)} enable parallelToolCalls without toolCalling=true.`);
+      throw new ConfigError(`Resolved capabilities for requested model ${JSON.stringify(requestedModel)} and upstream model ${JSON.stringify(upstreamModel)}: parallelToolCalls=true requires toolCalling=true.`);
     }
   }
 }
