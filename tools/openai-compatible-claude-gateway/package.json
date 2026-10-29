@@ -1,0 +1,16 @@
+{
+  "name": "openai-compatible-claude-gateway",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Standalone Anthropic Messages to OpenAI Chat Completions compatibility gateway for Claude Code",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "start": "node src/main.js",
+    "test": "node --test",
+    "check": "node scripts/check.mjs",
+    "smoke": "node --test tests/integration.test.js"
+  }
+}

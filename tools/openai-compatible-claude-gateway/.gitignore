@@ -1,0 +1,6 @@
+.env
+.env.local
+gateway.config.json
+*.log
+coverage/
+node_modules/
