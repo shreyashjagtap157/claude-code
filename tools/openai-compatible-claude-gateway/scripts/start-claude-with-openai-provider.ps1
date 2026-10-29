@@ -1,7 +1,4 @@
-param(
-    [Parameter(ValueFromRemainingArguments = $true)]
-    [string[]] $ClaudeArgs
-)
+$ClaudeArgs = @($args)
 $ErrorActionPreference = 'Stop'
 
 $rootDir = Split-Path -Parent $PSScriptRoot
