@@ -7,6 +7,19 @@ import { createGatewayServer } from "../src/server.js";
 const EXPECTED = "GATEWAY_CLI_SMOKE_OK";
 const LOCAL_TOKEN = "gateway-cli-smoke-local-token";
 const upstreamRequests = [];
+const gatewayErrors = [];
+const originalStdoutWrite = process.stdout.write;
+process.stdout.write = function (chunk, ...args) {
+  if (typeof chunk === "string") {
+    for (const line of chunk.split("\\n")) {
+      try {
+        const event = JSON.parse(line);
+        if (event?.event === "request_failed") gatewayErrors.push({ code: event.code, status: event.status, detail: event.detail });
+      } catch { /* non-JSON application output is not a gateway log event */ }
+    }
+  }
+  return originalStdoutWrite.call(this, chunk, ...args);
+};
 let gateway;
 let upstream;
 
@@ -117,6 +130,7 @@ async function main() {
     if (result.code !== 0) throw new Error(`Claude Code CLI exited ${result.code} (signal ${result.signal || "none"}). stdout tail: ${result.stdout.slice(-3000)} stderr tail: ${result.stderr.slice(-3000)}`);
     if (!result.stdout.includes(EXPECTED)) throw new Error(`CLI output did not include the deterministic response. stdout tail: ${result.stdout.slice(-3000)} stderr tail: ${result.stderr.slice(-3000)}`);
     if (!upstreamRequests.length) throw new Error("Claude Code CLI completed without reaching the configured fake upstream.");
+    if (gatewayErrors.length) throw new Error(`Gateway rejected ${gatewayErrors.length} request(s) during real CLI smoke: ${JSON.stringify(gatewayErrors)}`);
     if (upstreamRequests.some(item => item.authorizationPresent || item.hasLocalTokenInBody)) throw new Error("Local gateway credentials leaked to the fake upstream.");
     process.stdout.write(JSON.stringify({
       result: "passed",
@@ -131,6 +145,7 @@ async function main() {
     gateway?.closeActiveGatewayRequests?.();
     await closeServer(gateway);
     await closeServer(upstream);
+    process.stdout.write = originalStdoutWrite;
   }
 }
 

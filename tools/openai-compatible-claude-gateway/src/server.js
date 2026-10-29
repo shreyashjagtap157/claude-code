@@ -1,6 +1,6 @@
 import http from "node:http";
 import { randomUUID, timingSafeEqual, createHash } from "node:crypto";
-import { GatewayError, UpstreamError, UpstreamProtocolError, anthropicError, publicUpstreamError } from "./errors.js";
+import { GatewayError, UpstreamError, UpstreamProtocolError, anthropicError, publicUpstreamError, sanitizeText } from "./errors.js";
 import { translateAnthropicRequest } from "./translate/request.js";
 import { translateChatCompletionResponse } from "./translate/response.js";
 import { streamChatCompletion, writeSse } from "./translate/stream.js";
@@ -151,7 +151,10 @@ function mapError(error) {
 
 function logSafeError(requestId, error, minimumLevel = "info") {
   const candidate = mapError(error);
-  logEvent("error", "request_failed", { request_id: requestId, code: candidate.code || candidate.name || "error", status: candidate.status || 500 }, minimumLevel);
+  const fields = { request_id: requestId, code: candidate.code || candidate.name || "error", status: candidate.status || 500 };
+  // Role-only schema diagnostics cannot include prompts, headers, tool arguments, or credential material.
+  if (candidate.code === "unsupported_message_role") fields.detail = sanitizeText(candidate.message).slice(0, 240);
+  logEvent("error", "request_failed", fields, minimumLevel);
 }
 
 export function createGatewayServer(config) {
