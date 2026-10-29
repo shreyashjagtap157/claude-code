@@ -136,7 +136,11 @@ async function callUpstream(config, translated, controller, requestId) {
   }
   let text;
   try { text = await readBodyLimited(upstreamResponse.body, Math.max(config.maxBodyBytes * 4, 8 * 1024 * 1024)); }
-  catch (cause) { if (cause instanceof UpstreamProtocolError) throw cause; throw new UpstreamProtocolError("Failed while reading the upstream JSON response.", cause); }
+  catch (cause) {
+    if (controller.signal.aborted && controller.signal.reason instanceof UpstreamError) throw controller.signal.reason;
+    if (cause instanceof UpstreamProtocolError) throw cause;
+    throw new UpstreamProtocolError("Failed while reading the upstream JSON response.", cause);
+  }
   let payload;
   try { payload = JSON.parse(text); }
   catch (cause) { throw new UpstreamProtocolError("Upstream returned invalid JSON for a non-streaming Chat Completions request.", cause); }

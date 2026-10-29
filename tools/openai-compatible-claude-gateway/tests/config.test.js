@@ -119,3 +119,11 @@ test("partial overrides can combine capabilities across the upstream ID and clie
   assert.equal(caps.toolCalling, true);
   assert.equal(caps.parallelToolCalls, true);
 });
+
+ 
+test("gateway output-token upper bound is configurable and defaults to one million", () => {
+  const base = { OPENAI_COMPATIBLE_BASE_URL: "https://provider.example/v1", OPENAI_COMPATIBLE_MODEL: "model" };
+  assert.equal(loadConfig({ cwd: "/no-env", env: base }).maxOutputTokens, 1_000_000);
+  assert.equal(loadConfig({ cwd: "/no-env", env: { ...base, GATEWAY_MAX_OUTPUT_TOKENS: "4096" } }).maxOutputTokens, 4096);
+  assert.throws(() => loadConfig({ cwd: "/no-env", env: { ...base, GATEWAY_MAX_OUTPUT_TOKENS: "0" } }), /GATEWAY_MAX_OUTPUT_TOKENS must be a positive integer/);
+});

@@ -116,3 +116,9 @@ test("finish reasons are mapped explicitly and unsupported provider reasons fail
   assert.throws(() => mapFinishReason(null, false), /Unsupported or missing upstream finish_reason/);
   assert.throws(() => mapFinishReason("function_call", false), /without stable tool-call IDs/);
 });
+
+ 
+test("rejects max_tokens above the configured gateway output bound", () => {
+  const bounded = loadConfig({ cwd: "/no-env", env: { ...baseEnv, GATEWAY_MAX_OUTPUT_TOKENS: "64" } });
+  assert.throws(() => translateAnthropicRequest(request({ max_tokens: 65 }), bounded), /must not exceed configured GATEWAY_MAX_OUTPUT_TOKENS \(64\)/);
+});

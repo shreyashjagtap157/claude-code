@@ -102,3 +102,18 @@ test("malformed JSON and oversized request bodies return typed Anthropic errors"
   assert.equal(oversized.status, 413);
   assert.equal((await oversized.json()).error.type, "request_too_large");
 });
+
+ 
+test("non-streaming response-body stalls preserve the 504 request-timeout classification", async t => {
+  const h = await createHarness({ mode: "nonstream-idle", config: { GATEWAY_REQUEST_TIMEOUT_MS: "60" } });
+  t.after(h.cleanup);
+  const response = await fetch(h.url + "/v1/messages", {
+    method: "POST",
+    headers: { ...localAuthorization, "content-type": "application/json" },
+    body: JSON.stringify(body({ stream: false }))
+  });
+  assert.equal(response.status, 504);
+  const error = await response.json();
+  assert.equal(error.error.type, "api_error");
+  assert.match(error.error.message, /timed out after 60 ms/);
+});

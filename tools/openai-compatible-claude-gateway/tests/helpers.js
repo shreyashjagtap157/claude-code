@@ -18,6 +18,12 @@ export function createFakeUpstream({ requests = [], mode = "normal", onStreamClo
     let raw = ""; for await (const chunk of req) raw += chunk.toString("utf8");
     let body; try { body = JSON.parse(raw); } catch { body = {}; }
     requests.push({ headers: { authorization: req.headers.authorization, local: req.headers["x-local-auth"] }, body });
+    if (mode === "nonstream-idle" && !body.stream) {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.flushHeaders();
+      setTimeout(() => { if (!res.destroyed) res.destroy(); }, 1000).unref?.();
+      return;
+    }
     if (mode === "safeguard-results") { res.writeHead(200, { "content-type": "application/json" }); res.end(JSON.stringify({ id: "chatcmpl_safety", safeguard_results: { allow: true }, choices: [{ index: 0, message: { role: "assistant", content: "Must not be accepted as Anthropic safety validation." }, finish_reason: "stop" }] })); return; }
     if (mode === "http-error") { res.writeHead(401, { "content-type": "application/json" }); res.end('{"error":"private detail must not escape"}'); return; }
     if (mode === "invalid-json") { res.writeHead(200, { "content-type": "application/json" }); res.end("not json"); return; }

@@ -121,11 +121,12 @@ function parseTools(tools, toolChoice, capabilities, disableParallel) {
   return { functionTools, choice, parallel: !disableParallel && capabilities.parallelToolCalls };
 }
 
-function validateRequest(body) {
+function validateRequest(body, config) {
   if (!body || typeof body !== "object" || Array.isArray(body)) throw invalid("Request body must be a JSON object.");
   for (const key of Object.keys(body)) if (!KNOWN_TOP_LEVEL.has(key)) throw invalid(`Unsupported Anthropic Messages field \"${key}\". The gateway will not silently discard semantics it cannot translate.`, "unsupported_field");
   if (typeof body.model !== "string" || !body.model.trim()) throw invalid("model must be a non-empty string.");
   if (!Number.isSafeInteger(body.max_tokens) || body.max_tokens < 1) throw invalid("max_tokens must be a positive integer.");
+  if (body.max_tokens > config.maxOutputTokens) throw invalid(`max_tokens must not exceed configured GATEWAY_MAX_OUTPUT_TOKENS (${config.maxOutputTokens}).`, "max_tokens_out_of_range");
   if (!Array.isArray(body.messages) || body.messages.length === 0) throw invalid("messages must be a non-empty array.");
   if (body.stream !== undefined && typeof body.stream !== "boolean") throw invalid("stream must be boolean.");
   for (const field of ["temperature", "top_p"]) {
@@ -142,7 +143,7 @@ function validateRequest(body) {
 }
 
 export function translateAnthropicRequest(body, config) {
-  validateRequest(body);
+  validateRequest(body, config);
   const model = resolveModel(body.model, config);
   const caps = resolveCapabilities(body.model, model, config);
   if (body.stream && !caps.streaming) throw invalid("Streaming is disabled for this upstream in OPENAI_COMPATIBLE_CAPABILITIES.", "unsupported_capability");

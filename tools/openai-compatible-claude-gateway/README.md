@@ -177,7 +177,7 @@ The manual commands above change only the current shell session, but the wrapper
 - If local auth is enabled, the gateway accepts a bearer `Authorization` token or `x-api-key` and compares using a constant-time comparison over fixed-length digests. `/health` does not reveal secret/configuration values and remains available without auth.
 - No request/response bodies, prompt text, code, request headers, tokens, or upstream error payloads are logged by default. Logs use a correlation ID and status/error code. Provider error bodies are not copied into client-facing error messages.
 - CORS is denied by default; no `Access-Control-Allow-Origin` is emitted. Incoming request bodies and concurrent requests are bounded.
-- `GATEWAY_REQUEST_TIMEOUT_MS`, `GATEWAY_STREAM_IDLE_TIMEOUT_MS`, `GATEWAY_MAX_BODY_BYTES`, and `GATEWAY_MAX_CONCURRENT_REQUESTS` are configurable.
+- `GATEWAY_REQUEST_TIMEOUT_MS`, `GATEWAY_STREAM_IDLE_TIMEOUT_MS`, `GATEWAY_MAX_BODY_BYTES`, `GATEWAY_MAX_OUTPUT_TOKENS`, and `GATEWAY_MAX_CONCURRENT_REQUESTS` are configurable. The default output-token ceiling is 1,000,000; lower it to suit your deployment and upstream capacity. Requests over the configured ceiling are rejected before any provider request is sent.
 - Client disconnects abort upstream fetches; shutdown cancels active upstream requests. No inference retry is performed because retrying after a potentially billed request or partial stream can duplicate work.
 - Port conflicts fail without killing another process. The server is foreground-only; start it once and stop it with Ctrl+C.
 

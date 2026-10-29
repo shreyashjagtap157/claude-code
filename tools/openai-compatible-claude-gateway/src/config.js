@@ -229,6 +229,7 @@ export function loadConfig({ env = process.env, cwd = process.cwd() } = {}) {
     requestTimeoutMs: positiveInteger(merged.GATEWAY_REQUEST_TIMEOUT_MS, "GATEWAY_REQUEST_TIMEOUT_MS", 600000, 2147483647),
     streamIdleTimeoutMs: positiveInteger(merged.GATEWAY_STREAM_IDLE_TIMEOUT_MS, "GATEWAY_STREAM_IDLE_TIMEOUT_MS", 60000, 2147483647),
     maxBodyBytes: positiveInteger(merged.GATEWAY_MAX_BODY_BYTES, "GATEWAY_MAX_BODY_BYTES", 2 * 1024 * 1024, 100 * 1024 * 1024),
+    maxOutputTokens: positiveInteger(merged.GATEWAY_MAX_OUTPUT_TOKENS, "GATEWAY_MAX_OUTPUT_TOKENS", 1_000_000, 2_147_483_647),
     maxConcurrentRequests: positiveInteger(merged.GATEWAY_MAX_CONCURRENT_REQUESTS, "GATEWAY_MAX_CONCURRENT_REQUESTS", 32, 10000),
     envFile: path.basename(envFile),
     displayEndpoint: normalized.upstreamUrl.origin + normalized.upstreamUrl.pathname,

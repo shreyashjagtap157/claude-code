@@ -43,7 +43,10 @@ $names = @(
     'CLAUDE_CODE_ATTRIBUTION_HEADER', 'CLAUDE_CODE_DISABLE_THINKING', 'CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS', 'CLAUDE_CODE_EFFORT_LEVEL',
     'OPENAI_COMPATIBLE_API_KEY', 'OPENAI_COMPATIBLE_BASE_URL', 'OPENAI_COMPATIBLE_MODEL', 'OPENAI_COMPATIBLE_MAX_TOKENS_FIELD', 'OPENAI_COMPATIBLE_MODEL_PASSTHROUGH',
     'OPENAI_COMPATIBLE_MODEL_MAP', 'OPENAI_COMPATIBLE_MODEL_CAPABILITIES', 'OPENAI_COMPATIBLE_CHAT_COMPLETIONS_PATH', 'OPENAI_COMPATIBLE_CAPABILITIES',
-    'OPENAI_COMPATIBLE_ALLOW_INSECURE_HTTP', 'GATEWAY_API_KEY', 'GATEWAY_CONFIG_FILE', 'GATEWAY_ENV_FILE'
+    'OPENAI_COMPATIBLE_ALLOW_INSECURE_HTTP', 'GATEWAY_API_KEY', 'GATEWAY_CONFIG_FILE', 'GATEWAY_ENV_FILE',
+    'GATEWAY_BASE_URL', 'GATEWAY_HOST', 'GATEWAY_PORT', 'GATEWAY_ALLOW_REMOTE', 'GATEWAY_LOG_LEVEL',
+    'GATEWAY_REQUEST_TIMEOUT_MS', 'GATEWAY_STREAM_IDLE_TIMEOUT_MS', 'GATEWAY_MAX_BODY_BYTES',
+    'GATEWAY_MAX_OUTPUT_TOKENS', 'GATEWAY_MAX_CONCURRENT_REQUESTS'
 )
 $old = @{}
 foreach ($name in $names) { $old[$name] = [Environment]::GetEnvironmentVariable($name, 'Process') }
@@ -68,6 +71,16 @@ try {
     Remove-Item Env:GATEWAY_API_KEY -ErrorAction SilentlyContinue
     Remove-Item Env:GATEWAY_CONFIG_FILE -ErrorAction SilentlyContinue
     Remove-Item Env:GATEWAY_ENV_FILE -ErrorAction SilentlyContinue
+    Remove-Item Env:GATEWAY_BASE_URL -ErrorAction SilentlyContinue
+    Remove-Item Env:GATEWAY_HOST -ErrorAction SilentlyContinue
+    Remove-Item Env:GATEWAY_PORT -ErrorAction SilentlyContinue
+    Remove-Item Env:GATEWAY_ALLOW_REMOTE -ErrorAction SilentlyContinue
+    Remove-Item Env:GATEWAY_LOG_LEVEL -ErrorAction SilentlyContinue
+    Remove-Item Env:GATEWAY_REQUEST_TIMEOUT_MS -ErrorAction SilentlyContinue
+    Remove-Item Env:GATEWAY_STREAM_IDLE_TIMEOUT_MS -ErrorAction SilentlyContinue
+    Remove-Item Env:GATEWAY_MAX_BODY_BYTES -ErrorAction SilentlyContinue
+    Remove-Item Env:GATEWAY_MAX_OUTPUT_TOKENS -ErrorAction SilentlyContinue
+    Remove-Item Env:GATEWAY_MAX_CONCURRENT_REQUESTS -ErrorAction SilentlyContinue
     if ($localToken) { $env:ANTHROPIC_AUTH_TOKEN = $localToken }
     else { Remove-Item Env:ANTHROPIC_AUTH_TOKEN -ErrorAction SilentlyContinue }
     & $claudeCommand @ClaudeArgs
