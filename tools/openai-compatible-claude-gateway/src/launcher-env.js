@@ -13,7 +13,7 @@ export function createClaudeChildEnvironment(parentEnv, { gatewayBaseUrl, gatewa
   // The bridge reshapes system/content fields and cannot preserve Anthropic-only reasoning/beta semantics.
   child.CLAUDE_CODE_ATTRIBUTION_HEADER = "0";
   child.CLAUDE_CODE_DISABLE_THINKING = "1";
-  if (!Object.hasOwn(parentEnv, "CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS")) child.CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS = "1";
+  if (!child.CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS) child.CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS = "1";
   if (!child.CLAUDE_CODE_EFFORT_LEVEL) child.CLAUDE_CODE_EFFORT_LEVEL = "auto";
   // Use only the local gateway token. Clearing an inherited API key avoids sending a provider key to localhost.
   delete child.ANTHROPIC_API_KEY;

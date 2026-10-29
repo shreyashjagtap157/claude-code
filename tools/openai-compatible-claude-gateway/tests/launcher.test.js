@@ -18,3 +18,16 @@ test("launcher does not invent a local credential when none is configured", () =
   assert.equal(child.ANTHROPIC_AUTH_TOKEN, undefined); assert.equal(child.ANTHROPIC_API_KEY, undefined); assert.equal(child.CLAUDE_CODE_AUTO_MODE_SERVER, "0");
   assert.equal(child.CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS, "1");
 });
+
+
+test("launcher defaults empty beta and effort values consistently with shell wrappers", () => {
+  const child = createClaudeChildEnvironment({ CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS: "", CLAUDE_CODE_EFFORT_LEVEL: "" }, { gatewayBaseUrl: "http://127.0.0.1:3456" });
+  assert.equal(child.CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS, "1");
+  assert.equal(child.CLAUDE_CODE_EFFORT_LEVEL, "auto");
+});
+
+test("launcher preserves explicit beta and effort overrides", () => {
+  const child = createClaudeChildEnvironment({ CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS: "0", CLAUDE_CODE_EFFORT_LEVEL: "low" }, { gatewayBaseUrl: "http://127.0.0.1:3456" });
+  assert.equal(child.CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS, "0");
+  assert.equal(child.CLAUDE_CODE_EFFORT_LEVEL, "low");
+});
