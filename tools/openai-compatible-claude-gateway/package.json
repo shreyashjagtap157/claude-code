@@ -11,6 +11,7 @@
     "start": "node src/main.js",
     "test": "node --test",
     "check": "node scripts/check.mjs",
-    "smoke": "node --test tests/integration.test.js tests/stream-errors.test.js"
+    "smoke": "node --test tests/integration.test.js tests/stream-errors.test.js",
+    "cli-smoke": "node tests/claude-cli-smoke.mjs"
   }
 }

@@ -176,6 +176,11 @@ The manual commands above change only the current shell session, but the wrapper
 - Client disconnects abort upstream fetches; shutdown cancels active upstream requests. No inference retry is performed because retrying after a potentially billed request or partial stream can duplicate work.
 - Port conflicts fail without killing another process. The server is foreground-only; start it once and stop it with Ctrl+C.
 
+## Real CLI smoke test
+
+`npm run cli-smoke` exercises an installed Claude Code CLI against a gateway instance connected only to a deterministic fake OpenAI-compatible server. It does not need a Claude account, a real provider endpoint, or provider credentials. The script uses the CLI executable on `PATH` (or `CLAUDE_BIN`), sends one non-interactive prompt, and verifies that the fake upstream received the request without receiving local gateway authentication. The hosted Linux CI installs Claude Code using Anthropic's native installer with auto-updates disabled for the test, then runs this smoke check. This is separate from the gateway-only test suite.
+
+
 ## Validation commands
 
 ```sh
@@ -187,7 +192,7 @@ npm pack --dry-run
 
 `npm run check` syntax-checks all `.js`/`.mjs` runtime, script and test files. Repository CI also installs the generated npm tarball into an isolated temporary prefix and repeats the checks and tests from the installed package. There is intentionally no external linter/type-checker or compilation step: the implementation is dependency-free JavaScript, not TypeScript. `npm test` exercises config, request/response conversion, SSE chunking, credential separation, authentication, the HTTP integration path, and multi-turn tool use against a deterministic local fake upstream. `npm run smoke` runs the real HTTP integration subset. None of these commands contacts a hosted provider or makes billable model calls.
 
-A real `claude` CLI smoke test and Windows PowerShell execution depend on the target machine having the actual CLI and PowerShell installed. A deterministic fake upstream verifies the gateway protocol independently of any paid provider.
+The local development machine may not have Claude Code installed; the hosted Linux CI installs the current CLI and performs the real-CLI smoke test against the deterministic fake upstream. The Windows CI job runs the PowerShell wrapper end to end with a fake health server and fake CLI. Neither test sends a request to a billable model provider.
 
 ## Troubleshooting
 

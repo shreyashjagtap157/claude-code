@@ -109,3 +109,33 @@ jobs:
         working-directory: tools/openai-compatible-claude-gateway
         shell: pwsh
         run: ./tests/windows-launcher-smoke.ps1
+  claude-cli:
+    name: Real Claude Code CLI against deterministic fake upstream
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Claude Code CLI using the official native installer
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL https://claude.ai/install.sh | bash
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          "$HOME/.local/bin/claude" --version
+        env:
+          DISABLE_AUTOUPDATER: "1"
+
+      - name: Run real CLI smoke against local deterministic provider
+        working-directory: tools/openai-compatible-claude-gateway
+        run: npm run cli-smoke
+        env:
+          DISABLE_AUTOUPDATER: "1"
+          DISABLE_TELEMETRY: "1"
+          DISABLE_ERROR_REPORTING: "1"
+          DO_NOT_TRACK: "1"
