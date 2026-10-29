@@ -16,7 +16,8 @@ This document specifies the implemented bridge contract. It intentionally does n
 |---|---|---|
 | `model` | `model` | Alias → configured default → opt-in pass-through. The response uses the original client model label. |
 | `system` string/text blocks | leading `system` message | Text preserved; non-text system blocks rejected. |
-| `messages` roles and text | ordered `system`/`user`/`assistant` messages | Text order preserved. Unknown roles/content kinds rejected. |
+| `role: system` entry in `messages` | position-preserving `system` Chat Completions message | Accepted for Claude Code custom-base-URL compatibility; text only, no hoisting or content loss. |
+| `messages` roles and text | ordered `system`/`user`/`assistant` messages | Text order preserved; system-role entries are accepted at their existing position for custom-base-URL compatibility. Other unknown roles/content kinds are rejected. |
 | user image blocks | `image_url` text/image content parts | Only when `images=true`; base64 data URLs and unauthenticated HTTP(S) URLs supported. |
 | assistant `tool_use` | assistant `tool_calls` | Tool IDs preserved; input JSON serialized. Multiple calls and parallel IDs are preserved. |
 | user `tool_result` | `role: tool`, `tool_call_id`, content | Exact tool ID retained. Text and configured image parts accepted; `is_error=true` rejected because no interoperable marker exists. Mixing tool results with other user blocks is rejected to prevent reordering. |

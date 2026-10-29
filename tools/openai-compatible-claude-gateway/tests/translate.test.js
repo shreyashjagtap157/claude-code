@@ -15,6 +15,31 @@ test("translates system, ordered messages and common sampling fields", () => {
   assert.equal(result.request.max_tokens, 500); assert.equal(result.request.temperature, 0.2); assert.equal(result.request.top_p, 0.8); assert.deepEqual(result.request.stop, ["END"]); assert.equal(result.request.stream, false);
 });
 
+test("maps system-role entries inside messages to ordered Chat Completions system messages", () => {
+  const result = translateAnthropicRequest(request({
+    system: "Top-level system",
+    messages: [
+      { role: "user", content: "first" },
+      { role: "system", content: [{ type: "text", text: "In-turn system" }] },
+      { role: "assistant", content: "second" },
+      { role: "user", content: "third" }
+    ]
+  }), cfg);
+  assert.deepEqual(result.request.messages.map(item => item.role), ["system", "user", "system", "assistant", "user"]);
+  assert.deepEqual(result.request.messages.map(item => item.content), ["Top-level system", "first", "In-turn system", "second", "third"]);
+});
+
+test("maps system-role message strings and rejects unsupported blocks inside them", () => {
+  const result = translateAnthropicRequest(request({
+    messages: [{ role: "system", content: "Additional system instruction" }, { role: "user", content: "go" }]
+  }), cfg);
+  assert.deepEqual(result.request.messages.map(item => item.role), ["system", "system", "user"]);
+  assert.equal(result.request.messages[1].content, "Additional system instruction");
+  assert.throws(() => translateAnthropicRequest(request({
+    messages: [{ role: "system", content: [{ type: "image", source: { type: "url", url: "https://example.com/image.png" } }] }]
+  }), cfg), /only text blocks are supported here/);
+});
+
 test("translates base64 and remote images only when configured for vision", () => {
   const imageRequest = request({ messages: [{ role: "user", content: [{ type: "text", text: "look" }, { type: "image", source: { type: "base64", media_type: "image/png", data: "aGVsbG8=" } }, { type: "image", source: { type: "url", url: "https://images.example/test.png" } }] }] });
   const result = translateAnthropicRequest(imageRequest, cfg); assert.deepEqual(result.request.messages[1].content[1], { type: "image_url", image_url: { url: "data:image/png;base64,aGVsbG8=" } }); assert.equal(result.request.messages[1].content[2].image_url.url, "https://images.example/test.png");

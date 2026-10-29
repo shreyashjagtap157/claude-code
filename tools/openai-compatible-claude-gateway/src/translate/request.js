@@ -163,12 +163,16 @@ export function translateAnthropicRequest(body, config) {
   }
   for (let index = 0; index < body.messages.length; index++) {
     const message = body.messages[index];
-    if (!message || typeof message !== "object" || !["user", "assistant"].includes(message.role)) {
+    if (!message || typeof message !== "object" || !["user", "assistant", "system"].includes(message.role)) {
       const actualRole = typeof message?.role === "string" ? JSON.stringify(message.role.slice(0, 48)) : String(typeof message?.role);
-      throw invalid(`messages[${index}].role ${actualRole} is not supported; Anthropic Messages roles must be user or assistant.`, "unsupported_message_role");
+      throw invalid(`messages[${index}].role ${actualRole} is not supported; expected user, assistant, or system.`, "unsupported_message_role");
     }
     if (!Object.hasOwn(message, "content")) throw invalid(`messages[${index}] is missing content.`);
-    if (message.role === "user") {
+    if (message.role === "system") {
+      // Claude Code can emit system-role entries inside messages while using a custom Anthropic base URL.
+      // Preserve their position in the turn list instead of rejecting or hoisting the content.
+      messages.push({ role: "system", content: textOnlyContent(message.content, `messages[${index}] system`) });
+    } else if (message.role === "user") {
       const translated = parseUserBlocks(message.content, caps, `messages[${index}]`);
       if (typeof translated === "string") messages.push({ role: "user", content: translated });
       else {
