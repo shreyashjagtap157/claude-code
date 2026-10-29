@@ -20,7 +20,9 @@ try {
             $rawPort = Get-Content -Raw -LiteralPath $portFile -ErrorAction SilentlyContinue
             if (-not [string]::IsNullOrWhiteSpace($rawPort)) {
                 $candidate = $rawPort.Trim()
-                if ($candidate -match '^\d+
+                $parsedPort = 0
+                if ([int]::TryParse($rawPort.Trim(), [ref]$parsedPort) -and $parsedPort -gt 0) { $port = $parsedPort; break }
+            }
         }
         if ($healthProcess.HasExited) {
             $details = if (Test-Path -LiteralPath $healthErrorFile) { Get-Content -Raw -LiteralPath $healthErrorFile } else { '' }
