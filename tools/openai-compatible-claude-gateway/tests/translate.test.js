@@ -54,3 +54,9 @@ test("converts non-streaming text, tools, stop reasons and usage", () => {
   const maxTokens = translateChatCompletionResponse({ choices: [{ message: { content: "x" }, finish_reason: "length" }] }, "claude-test"); assert.equal(maxTokens.stop_reason, "max_tokens"); assert.deepEqual(maxTokens.usage, { input_tokens: 0, output_tokens: 0 });
   assert.throws(() => translateChatCompletionResponse({ choices: [{ message: { tool_calls: [{ id: "call_2", function: { name: "f", arguments: "not-json" } }] } }] }, "claude-test"), UpstreamProtocolError);
 });
+
+
+test("unsupported message roles are rejected with a safe role-only diagnostic", () => {
+  assert.throws(() => translateAnthropicRequest(request({ messages: [{ role: "developer", content: "not an Anthropic Messages role" }] }), cfg), /messages\[0\]\.role "developer" is not supported/);
+  assert.throws(() => translateAnthropicRequest(request({ messages: [{ content: "missing role" }] }), cfg), /messages\[0\]\.role undefined is not supported/);
+});

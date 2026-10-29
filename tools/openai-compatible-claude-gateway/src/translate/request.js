@@ -163,7 +163,10 @@ export function translateAnthropicRequest(body, config) {
   }
   for (let index = 0; index < body.messages.length; index++) {
     const message = body.messages[index];
-    if (!message || typeof message !== "object" || !["user", "assistant"].includes(message.role)) throw invalid(`messages[${index}].role must be user or assistant.`);
+    if (!message || typeof message !== "object" || !["user", "assistant"].includes(message.role)) {
+      const actualRole = typeof message?.role === "string" ? JSON.stringify(message.role.slice(0, 48)) : String(typeof message?.role);
+      throw invalid(`messages[${index}].role ${actualRole} is not supported; Anthropic Messages roles must be user or assistant.`, "unsupported_message_role");
+    }
     if (!Object.hasOwn(message, "content")) throw invalid(`messages[${index}] is missing content.`);
     if (message.role === "user") {
       const translated = parseUserBlocks(message.content, caps, `messages[${index}]`);
