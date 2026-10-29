@@ -10,6 +10,10 @@ This document specifies the implemented bridge contract. It intentionally does n
 4. Call only the configured endpoint with a fresh `Authorization: Bearer OPENAI_COMPATIBLE_API_KEY` header if configured. Redirects are errors. Client-provided URLs cannot alter upstream routing.
 5. Convert the response to the Anthropic Messages JSON contract or stream each upstream SSE event incrementally into Anthropic SSE events.
 
+## Capability resolution
+
+OPENAI_COMPATIBLE_CAPABILITIES defines the baseline capability contract. OPENAI_COMPATIBLE_MODEL_CAPABILITIES optionally provides partial overrides per requested/client model ID and/or resolved upstream model ID. Resolution order is global baseline, upstream model override, then exact requested alias override. Override schemas are validated, including that parallelToolCalls=true requires toolCalling=true after resolution. The request translator returns resolved capabilities with its translated request; stream validation and non-stream response handling use those request-scoped capabilities rather than global flags.
+
 ## Request field mapping
 
 | Anthropic field/content | Chat Completions mapping | Implemented policy |

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { loadConfig, resolveModel, configInternals } from "../src/config.js";
+import { loadConfig, resolveModel, resolveCapabilities, configInternals } from "../src/config.js";
 import { ConfigError } from "../src/errors.js";
 
 function envFor(baseUrl, more = {}) { return { OPENAI_COMPATIBLE_BASE_URL: baseUrl, OPENAI_COMPATIBLE_MODEL: "default-model", ...more }; }
@@ -70,4 +70,52 @@ test("dedicated max-token field override validates and takes precedence over cap
   assert.throws(() => loadConfig({ env: envFor("https://provider.example/v1", {
     OPENAI_COMPATIBLE_MAX_TOKENS_FIELD: "max_new_tokens"
   }), cwd: "/no-env" }), /OPENAI_COMPATIBLE_MAX_TOKENS_FIELD must be max_tokens or max_completion_tokens/);
+});
+
+ 
+test("per-model capability overrides resolve upstream-first and requested-alias-last", () => {
+  const cfg = loadConfig({ cwd: "/no-env", env: {
+    OPENAI_COMPATIBLE_BASE_URL: "https://provider.example/v1",
+    OPENAI_COMPATIBLE_MODEL: "fallback-model",
+    OPENAI_COMPATIBLE_MODEL_MAP: '{"claude-vision":"vision-model","claude-tools":"tool-model"}',
+    OPENAI_COMPATIBLE_CAPABILITIES: '{"toolCalling":false,"images":false}',
+    OPENAI_COMPATIBLE_MODEL_CAPABILITIES: '{"vision-model":{"images":true,"toolCalling":true},"claude-vision":{"images":false},"tool-model":{"toolCalling":true}}'
+  }});
+  const vision = resolveCapabilities("claude-vision", "vision-model", cfg);
+  assert.equal(vision.toolCalling, true);
+  assert.equal(vision.images, false, "exact requested alias takes precedence over upstream model ID");
+  const tools = resolveCapabilities("claude-tools", "tool-model", cfg);
+  assert.equal(tools.toolCalling, true);
+  assert.equal(tools.images, false);
+  const defaultRoute = resolveCapabilities("unknown-claude-alias", "fallback-model", cfg);
+  assert.equal(defaultRoute.images, false);
+});
+
+test("per-model capability override JSON rejects unknown names, invalid types, and invalid tool combinations", () => {
+  const base = { OPENAI_COMPATIBLE_BASE_URL: "https://provider.example/v1", OPENAI_COMPATIBLE_MODEL: "fallback" };
+  assert.throws(() => loadConfig({ cwd: "/no-env", env: { ...base, OPENAI_COMPATIBLE_MODEL_CAPABILITIES: '{"m":{"mystery":true}}' } }), /Unknown capability key mystery/);
+  assert.throws(() => loadConfig({ cwd: "/no-env", env: { ...base, OPENAI_COMPATIBLE_MODEL_CAPABILITIES: '{"m":{"images":"yes"}}' } }), /images must be boolean/);
+  assert.throws(() => loadConfig({ cwd: "/no-env", env: { ...base, OPENAI_COMPATIBLE_MODEL_CAPABILITIES: '{"m":{"parallelToolCalls":true}}' } }), /parallelToolCalls=true requires toolCalling=true/);
+  assert.throws(() => loadConfig({ cwd: "/no-env", env: { ...base, OPENAI_COMPATIBLE_MODEL_CAPABILITIES: '[]' } }), /must be a JSON object mapping model IDs/);
+});
+
+
+test("per-model capability IDs reject newline characters instead of mis-parsing them", () => {
+  const base = { OPENAI_COMPATIBLE_BASE_URL: "https://provider.example/v1", OPENAI_COMPATIBLE_MODEL: "fallback" };
+  const withNewline = JSON.stringify({ ["bad\nmodel"]: { images: true } });
+  assert.throws(() => loadConfig({ cwd: "/no-env", env: { ...base, OPENAI_COMPATIBLE_MODEL_CAPABILITIES: withNewline } }), /keys must be non-empty model IDs/);
+});
+
+
+test("partial overrides can combine capabilities across the upstream ID and client alias", () => {
+  const cfg = loadConfig({ cwd: "/no-env", env: {
+    OPENAI_COMPATIBLE_BASE_URL: "https://provider.example/v1",
+    OPENAI_COMPATIBLE_MODEL: "fallback",
+    OPENAI_COMPATIBLE_MODEL_MAP: '{"claude-tools":"tool-model"}',
+    OPENAI_COMPATIBLE_CAPABILITIES: '{"toolCalling":false,"parallelToolCalls":false}',
+    OPENAI_COMPATIBLE_MODEL_CAPABILITIES: '{"tool-model":{"toolCalling":true},"claude-tools":{"parallelToolCalls":true}}'
+  }});
+  const caps = resolveCapabilities("claude-tools", "tool-model", cfg);
+  assert.equal(caps.toolCalling, true);
+  assert.equal(caps.parallelToolCalls, true);
 });

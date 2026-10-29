@@ -1,5 +1,5 @@
 import { GatewayError } from "../errors.js";
-import { resolveModel } from "../config.js";
+import { resolveModel, resolveCapabilities } from "../config.js";
 
 const KNOWN_TOP_LEVEL = new Set([
   "model", "messages", "system", "max_tokens", "temperature", "top_p", "stop_sequences", "stream", "tools", "tool_choice", "metadata", "output_config", "thinking", "effort", "cache_control", "context_management", "mcp_servers", "container", "service_tier", "disable_parallel_tool_use"
@@ -144,7 +144,7 @@ function validateRequest(body) {
 export function translateAnthropicRequest(body, config) {
   validateRequest(body);
   const model = resolveModel(body.model, config);
-  const caps = config.capabilities;
+  const caps = resolveCapabilities(body.model, model, config);
   if (body.stream && !caps.streaming) throw invalid("Streaming is disabled for this upstream in OPENAI_COMPATIBLE_CAPABILITIES.", "unsupported_capability");
   if (body.temperature !== undefined && !caps.temperature) throw invalid("This upstream is not configured to support temperature.", "unsupported_capability");
   if (body.top_p !== undefined && !caps.topP) throw invalid("This upstream is not configured to support top_p.", "unsupported_capability");
@@ -230,5 +230,5 @@ export function translateAnthropicRequest(body, config) {
     request.response_format = { type: "json_schema", json_schema: { name: "response", strict: true, schema: body.output_config.format.schema } };
   }
   if (body.stream && caps.streamUsage) request.stream_options = { include_usage: true };
-  return { request, clientModel: body.model, upstreamModel: model };
+  return { request, clientModel: body.model, upstreamModel: model, capabilities: caps };
 }

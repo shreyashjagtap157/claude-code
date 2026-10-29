@@ -227,13 +227,13 @@ export function createGatewayServer(config) {
           clientModel: translated.clientModel,
           streamIdleTimeoutMs: config.streamIdleTimeoutMs,
           signal: controller.signal,
-          streamRequiresDone: config.capabilities.streamRequiresDone,
-          toolCalling: config.capabilities.toolCalling
+          streamRequiresDone: translated.capabilities.streamRequiresDone,
+          toolCalling: translated.capabilities.toolCalling
         }, response);
         if (!response.writableEnded && !response.destroyed) response.end();
         logEvent("info", "request_completed", { request_id: requestId, route, status: 200, streamed: true, upstream_status: upstream.status }, config.logLevel);
       } else {
-        if (Array.isArray(upstream.payload?.choices?.[0]?.message?.tool_calls) && upstream.payload.choices[0].message.tool_calls.length && !config.capabilities.toolCalling) throw new UpstreamProtocolError("Upstream returned tool calls although tool calling is disabled for this model.");
+        if (Array.isArray(upstream.payload?.choices?.[0]?.message?.tool_calls) && upstream.payload.choices[0].message.tool_calls.length && !translated.capabilities.toolCalling) throw new UpstreamProtocolError("Upstream returned tool calls although tool calling is disabled for this model.");
         const anthropic = translateChatCompletionResponse(upstream.payload, translated.clientModel);
         sendJson(response, 200, anthropic, requestId);
         logEvent("info", "request_completed", { request_id: requestId, route, status: 200, streamed: false }, config.logLevel);

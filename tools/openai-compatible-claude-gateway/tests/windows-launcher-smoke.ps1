@@ -45,6 +45,9 @@ if "%CLAUDE_CODE_EFFORT_LEVEL%"=="auto" (echo EFFORT=auto) else (echo EFFORT=wro
 if "%OPENAI_COMPATIBLE_API_KEY%"=="" (echo UPSTREAM_KEY=absent) else (echo UPSTREAM_KEY=LEAKED)
 if "%ANTHROPIC_API_KEY%"=="" (echo ANTHROPIC_API_KEY=absent) else (echo ANTHROPIC_API_KEY=LEAKED)
 if "%GATEWAY_API_KEY%"=="" (echo GATEWAY_KEY=absent) else (echo GATEWAY_KEY=LEAKED)
+if "%OPENAI_COMPATIBLE_MODEL_CAPABILITIES%"=="" (echo MODEL_CAPABILITIES=absent) else (echo MODEL_CAPABILITIES=LEAKED)
+if "%GATEWAY_ENV_FILE%"=="" (echo GATEWAY_ENV_FILE=absent) else (echo GATEWAY_ENV_FILE=LEAKED)
+if "%GATEWAY_CONFIG_FILE%"=="" (echo GATEWAY_CONFIG_FILE=absent) else (echo GATEWAY_CONFIG_FILE=LEAKED)
 echo ARGS=%*
 exit /b 0
 '@
@@ -56,6 +59,9 @@ exit /b 0
         "`$env:GATEWAY_BASE_URL = 'http://127.0.0.1:$port'",
         "`$env:GATEWAY_API_KEY = 'local-launch-token-fixture'",
         "`$env:OPENAI_COMPATIBLE_API_KEY = 'upstream-key-fixture-do-not-print'",
+        "`$env:OPENAI_COMPATIBLE_MODEL_CAPABILITIES = 'private-model-capability-config'",
+        "`$env:GATEWAY_ENV_FILE = 'private-env-path'",
+        "`$env:GATEWAY_CONFIG_FILE = 'private-config-path'",
         "`$env:OPENAI_COMPATIBLE_BASE_URL = 'https://provider.example/v1'",
         "`$env:ANTHROPIC_API_KEY = 'old-anthropic-key-fixture-do-not-print'",
         "`$env:ANTHROPIC_AUTH_TOKEN = 'old-anthropic-token-fixture-do-not-print'",
@@ -69,7 +75,7 @@ exit /b 0
     $output = & pwsh -NoProfile -ExecutionPolicy Bypass -File $runnerPath 2>&1 | Out-String
     $exitCode = $LASTEXITCODE
     if ($exitCode -ne 0) { throw "PowerShell launcher exited with code $exitCode. Output: $output" }
-    $expected = @('BASE=correct', 'LOCAL_AUTH=correct', 'AUTO_MODE_SERVER=0', 'ATTRIBUTION=0', 'THINKING=disabled', 'BETAS=disabled', 'EFFORT=auto', 'UPSTREAM_KEY=absent', 'ANTHROPIC_API_KEY=absent', 'GATEWAY_KEY=absent', 'ARGS=-p gateway-launcher-contract-smoke')
+    $expected = @('BASE=correct', 'LOCAL_AUTH=correct', 'AUTO_MODE_SERVER=0', 'ATTRIBUTION=0', 'THINKING=disabled', 'BETAS=disabled', 'EFFORT=auto', 'UPSTREAM_KEY=absent', 'ANTHROPIC_API_KEY=absent', 'GATEWAY_KEY=absent', 'MODEL_CAPABILITIES=absent', 'GATEWAY_ENV_FILE=absent', 'GATEWAY_CONFIG_FILE=absent', 'ARGS=-p gateway-launcher-contract-smoke')
     foreach ($value in $expected) {
         if (-not $output.Contains($value)) { throw "PowerShell launcher contract check failed at $value. Output: $output" }
     }

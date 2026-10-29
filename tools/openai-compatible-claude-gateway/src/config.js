@@ -123,6 +123,59 @@ function validateCapabilities(value) {
   return Object.freeze(result);
 }
 
+function validateModelCapabilities(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new ConfigError("OPENAI_COMPATIBLE_MODEL_CAPABILITIES must be a JSON object mapping model IDs to capability overrides.");
+  const result = Object.create(null);
+  for (const [modelId, override] of Object.entries(value)) {
+    if (!modelId.trim() || modelId.length > 256 || /[\r\n]/.test(modelId)) throw new ConfigError("OPENAI_COMPATIBLE_MODEL_CAPABILITIES keys must be non-empty model IDs no longer than 256 characters.");
+    if (!override || typeof override !== "object" || Array.isArray(override)) throw new ConfigError(`OPENAI_COMPATIBLE_MODEL_CAPABILITIES[${JSON.stringify(modelId)}] must be a JSON object.`);
+    const clean = {};
+    for (const [key, setting] of Object.entries(override)) {
+      if (!CAPABILITY_KEYS.has(key)) throw new ConfigError(`Unknown capability key ${key} in OPENAI_COMPATIBLE_MODEL_CAPABILITIES[${JSON.stringify(modelId)}].`);
+      if (key === "maxTokensField") {
+        if (!["max_tokens", "max_completion_tokens"].includes(setting)) throw new ConfigError(`OPENAI_COMPATIBLE_MODEL_CAPABILITIES[${JSON.stringify(modelId)}].maxTokensField must be max_tokens or max_completion_tokens.`);
+      } else if (typeof setting !== "boolean") {
+        throw new ConfigError(`OPENAI_COMPATIBLE_MODEL_CAPABILITIES[${JSON.stringify(modelId)}].${key} must be boolean.`);
+      }
+      clean[key] = setting;
+    }
+    result[modelId] = Object.freeze(clean);
+  }
+  return Object.freeze(result);
+}
+
+function assertCapabilityCombinations(modelMap, defaultModel, modelCapabilities, baseCapabilities) {
+  const pairs = [...Object.entries(modelMap)];
+  if (defaultModel) pairs.push([defaultModel, defaultModel]);
+  for (const modelId of Object.keys(modelCapabilities)) {
+    const upstreamModel = Object.hasOwn(modelMap, modelId) ? modelMap[modelId] : (defaultModel || modelId);
+    pairs.push([modelId, upstreamModel]);
+  }
+  for (const [requestedModel, upstreamModel] of pairs) {
+    const combined = {
+      ...baseCapabilities,
+      ...(modelCapabilities[upstreamModel] || {}),
+      ...(modelCapabilities[requestedModel] || {})
+    };
+    if (combined.parallelToolCalls && !combined.toolCalling) {
+      throw new ConfigError(`Resolved capabilities for requested model ${JSON.stringify(requestedModel)} and upstream model ${JSON.stringify(upstreamModel)} enable parallelToolCalls without toolCalling=true.`);
+    }
+  }
+}
+
+export function resolveCapabilities(requestedModel, upstreamModel, config) {
+  const overrides = config.modelCapabilities || Object.create(null);
+  const result = {
+    ...config.capabilities,
+    ...(overrides[upstreamModel] || {}),
+    ...(overrides[requestedModel] || {})
+  };
+  if (result.parallelToolCalls && !result.toolCalling) {
+    throw new ConfigError(`Resolved capabilities for requested model ${JSON.stringify(requestedModel)} enable parallelToolCalls without toolCalling=true.`);
+  }
+  return Object.freeze(result);
+}
+
 export function loadConfig({ env = process.env, cwd = process.cwd() } = {}) {
   const envFile = env.GATEWAY_ENV_FILE || path.join(cwd, ".env");
   const fileEnv = parseEnvFile(envFile);
@@ -157,12 +210,16 @@ export function loadConfig({ env = process.env, cwd = process.cwd() } = {}) {
     }
     capabilities = Object.freeze({ ...capabilities, maxTokensField });
   }
+  const modelCapabilitiesValue = parseJson(merged.OPENAI_COMPATIBLE_MODEL_CAPABILITIES, "OPENAI_COMPATIBLE_MODEL_CAPABILITIES", {});
+  const modelCapabilities = validateModelCapabilities(modelCapabilitiesValue);
+  assertCapabilityCombinations(modelMap, model, modelCapabilities, capabilities);
 
   return Object.freeze({
     host, port, gatewayApiKey, allowRemote,
     upstreamApiKey: String(merged.OPENAI_COMPATIBLE_API_KEY ?? ""),
     defaultModel: model,
     modelMap,
+    modelCapabilities,
     passThroughModel: String(merged.OPENAI_COMPATIBLE_MODEL_PASSTHROUGH ?? "false").toLowerCase() === "true",
     upstreamUrl: normalized.upstreamUrl,
     modelsUrl: normalized.modelsUrl,
@@ -186,4 +243,4 @@ export function resolveModel(requestedModel, config) {
   throw new (class extends Error { constructor() { super(`No upstream model is configured for requested model "${requestedModel}". Add an exact OPENAI_COMPATIBLE_MODEL_MAP entry or set OPENAI_COMPATIBLE_MODEL.`); this.name = "ModelRoutingError"; this.status = 400; this.type = "invalid_request_error"; this.code = "model_not_configured"; } })();
 }
 
-export const configInternals = { isLoopback, normalizeBaseAndEndpoint, parseEnvFile, validateCapabilities, validateModelMap, DEFAULT_CAPABILITIES };
+export const configInternals = { isLoopback, normalizeBaseAndEndpoint, parseEnvFile, validateCapabilities, validateModelMap, validateModelCapabilities, DEFAULT_CAPABILITIES };

@@ -85,3 +85,21 @@ test("unsupported message roles are rejected with a safe role-only diagnostic", 
   assert.throws(() => translateAnthropicRequest(request({ messages: [{ role: "developer", content: "not an Anthropic Messages role" }] }), cfg), /messages\[0\]\.role "developer" is not supported/);
   assert.throws(() => translateAnthropicRequest(request({ messages: [{ content: "missing role" }] }), cfg), /messages\[0\]\.role undefined is not supported/);
 });
+
+ 
+test("translator negotiates vision capability independently for model aliases", () => {
+  const perModel = loadConfig({ cwd: "/no-env", env: {
+    OPENAI_COMPATIBLE_BASE_URL: "https://provider.example/v1",
+    OPENAI_COMPATIBLE_MODEL: "fallback-model",
+    OPENAI_COMPATIBLE_MODEL_MAP: '{"claude-vision":"vision-model","claude-text":"text-model"}',
+    OPENAI_COMPATIBLE_CAPABILITIES: '{"images":false,"toolCalling":false}',
+    OPENAI_COMPATIBLE_MODEL_CAPABILITIES: '{"vision-model":{"images":true},"claude-vision":{"toolCalling":true}}'
+  }});
+  const imageRequest = request({ model: "claude-vision", messages: [{ role: "user", content: [{ type: "image", source: { type: "base64", media_type: "image/png", data: "aGVsbG8=" } }] }] });
+  const vision = translateAnthropicRequest(imageRequest, perModel);
+  assert.equal(vision.upstreamModel, "vision-model");
+  assert.equal(vision.capabilities.images, true);
+  assert.equal(vision.capabilities.toolCalling, true);
+  const textRequest = request({ model: "claude-text", messages: [{ role: "user", content: [{ type: "image", source: { type: "base64", media_type: "image/png", data: "aGVsbG8=" } }] }] });
+  assert.throws(() => translateAnthropicRequest(textRequest, perModel), /images are disabled/);
+});

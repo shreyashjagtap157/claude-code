@@ -69,6 +69,7 @@ OPENAI_COMPATIBLE_BASE_URL=http://127.0.0.1:8000/v1
 OPENAI_COMPATIBLE_API_KEY=
 OPENAI_COMPATIBLE_MODEL=your-local-model-id
 OPENAI_COMPATIBLE_MODEL_MAP={"claude-sonnet":"your-local-model-id"}
+OPENAI_COMPATIBLE_MODEL_CAPABILITIES={"your-local-model-id":{"toolCalling":true},"claude-sonnet":{"images":false}}
 OPENAI_COMPATIBLE_CAPABILITIES={"streaming":true,"toolCalling":true,"parallelToolCalls":false,"images":false,"jsonSchema":false,"reasoningEffort":false,"temperature":true,"topP":true,"stopSequences":true,"streamUsage":true,"streamRequiresDone":true,"maxTokensField":"max_tokens"}
 GATEWAY_HOST=127.0.0.1
 GATEWAY_PORT=3456
@@ -89,6 +90,10 @@ Do not paste actual secrets into tickets, chat transcripts, source control, test
 ### Model routing
 
 Routing order is exact requested-model entry in `OPENAI_COMPATIBLE_MODEL_MAP`, then `OPENAI_COMPATIBLE_MODEL`, then requested-model pass-through only when `OPENAI_COMPATIBLE_MODEL_PASSTHROUGH=true`. If no route is available, the request fails clearly; the gateway never changes models mid-turn. The client-facing Anthropic `model` remains the requested Claude model/alias so Claude Code sees a stable protocol identifier. The configured upstream model is used only on the upstream request.
+
+### Per-model capability configuration
+
+OPENAI_COMPATIBLE_CAPABILITIES supplies the conservative baseline. OPENAI_COMPATIBLE_MODEL_CAPABILITIES optionally maps requested/client model IDs or resolved upstream model IDs to partial overrides. Resolution order is global baseline, upstream-model override, then exact requested-alias override; the requested alias wins when both declare the same field. Unknown fields, invalid values, and resolved combinations with parallelToolCalls=true but toolCalling=false fail during config validation. Only enable capabilities you have actually validated for that model.
 
 Model IDs in `/v1/models` are derived from configured aliases and the default upstream model. The gateway does not query upstream `/models` at startup and therefore does not fail when that optional endpoint is unavailable. Claude Code's model-picker discovery is opt-in; where supported, set `CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1` in the child environment to populate it.
 
