@@ -86,7 +86,7 @@ test("unsupported message roles are rejected with a safe role-only diagnostic", 
   assert.throws(() => translateAnthropicRequest(request({ messages: [{ content: "missing role" }] }), cfg), /messages\[0\]\.role undefined is not supported/);
 });
 
- 
+
 test("translator negotiates vision capability independently for model aliases", () => {
   const perModel = loadConfig({ cwd: "/no-env", env: {
     OPENAI_COMPATIBLE_BASE_URL: "https://provider.example/v1",

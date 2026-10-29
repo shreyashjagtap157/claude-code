@@ -72,7 +72,7 @@ test("dedicated max-token field override validates and takes precedence over cap
   }), cwd: "/no-env" }), /OPENAI_COMPATIBLE_MAX_TOKENS_FIELD must be max_tokens or max_completion_tokens/);
 });
 
- 
+
 test("per-model capability overrides resolve upstream-first and requested-alias-last", () => {
   const cfg = loadConfig({ cwd: "/no-env", env: {
     OPENAI_COMPATIBLE_BASE_URL: "https://provider.example/v1",
