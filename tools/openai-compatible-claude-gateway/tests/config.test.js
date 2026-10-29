@@ -120,7 +120,7 @@ test("partial overrides can combine capabilities across the upstream ID and clie
   assert.equal(caps.parallelToolCalls, true);
 });
 
- 
+
 test("gateway output-token upper bound is configurable and defaults to one million", () => {
   const base = { OPENAI_COMPATIBLE_BASE_URL: "https://provider.example/v1", OPENAI_COMPATIBLE_MODEL: "model" };
   assert.equal(loadConfig({ cwd: "/no-env", env: base }).maxOutputTokens, 1_000_000);
