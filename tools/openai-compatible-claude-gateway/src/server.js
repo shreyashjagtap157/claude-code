@@ -236,6 +236,10 @@ export function createGatewayServer(config) {
         logEvent("info", "request_completed", { request_id: requestId, route, status: 200, streamed: false }, config.logLevel);
       }
     } catch (error) {
+      if (controller?.signal.aborted && (response.destroyed || !response.writable)) {
+        logEvent("info", "request_cancelled", { request_id: requestId, route }, config.logLevel);
+        return;
+      }
       const mapped = mapError(error);
       logSafeError(requestId, mapped, config.logLevel);
       if (response.headersSent) {

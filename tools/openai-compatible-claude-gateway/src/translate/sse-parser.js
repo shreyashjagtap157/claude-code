@@ -83,7 +83,11 @@ export async function* parseSse(body, { idleTimeoutMs = 60_000, signal } = {}) {
     }
   } catch (error) {
     try { await reader.cancel(error); } catch { /* best-effort stream cleanup */ }
-    throw error;
+    if (signal?.aborted && !(signal.reason instanceof UpstreamError)) throw signal.reason || error;
+    if (error instanceof UpstreamError) throw error;
+    throw new UpstreamError("Upstream streaming response disconnected unexpectedly before [DONE]; the response may be incomplete.", {
+      status: 502, type: "api_error", code: "upstream_stream_disconnected", cause: error
+    });
   } finally {
     try { reader.releaseLock(); } catch { /* reader may already be released */ }
   }
