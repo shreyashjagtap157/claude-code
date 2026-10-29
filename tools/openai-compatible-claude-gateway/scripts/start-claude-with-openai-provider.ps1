@@ -1,4 +1,3 @@
-[CmdletBinding()]
 param(
     [Parameter(ValueFromRemainingArguments = $true)]
     [string[]] $ClaudeArgs

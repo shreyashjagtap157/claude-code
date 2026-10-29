@@ -45,6 +45,7 @@ if "%CLAUDE_CODE_EFFORT_LEVEL%"=="auto" (echo EFFORT=auto) else (echo EFFORT=wro
 if "%OPENAI_COMPATIBLE_API_KEY%"=="" (echo UPSTREAM_KEY=absent) else (echo UPSTREAM_KEY=LEAKED)
 if "%ANTHROPIC_API_KEY%"=="" (echo ANTHROPIC_API_KEY=absent) else (echo ANTHROPIC_API_KEY=LEAKED)
 if "%GATEWAY_API_KEY%"=="" (echo GATEWAY_KEY=absent) else (echo GATEWAY_KEY=LEAKED)
+echo ARGS=%*
 exit /b 0
 '@
     $fakeCli = $fakeCli.Replace('PORT_PLACEHOLDER', [string]$port)
@@ -68,7 +69,7 @@ exit /b 0
     $output = & pwsh -NoProfile -ExecutionPolicy Bypass -File $runnerPath 2>&1 | Out-String
     $exitCode = $LASTEXITCODE
     if ($exitCode -ne 0) { throw "PowerShell launcher exited with code $exitCode. Output: $output" }
-    $expected = @('BASE=correct', 'LOCAL_AUTH=correct', 'AUTO_MODE_SERVER=0', 'ATTRIBUTION=0', 'THINKING=disabled', 'BETAS=disabled', 'EFFORT=auto', 'UPSTREAM_KEY=absent', 'ANTHROPIC_API_KEY=absent', 'GATEWAY_KEY=absent')
+    $expected = @('BASE=correct', 'LOCAL_AUTH=correct', 'AUTO_MODE_SERVER=0', 'ATTRIBUTION=0', 'THINKING=disabled', 'BETAS=disabled', 'EFFORT=auto', 'UPSTREAM_KEY=absent', 'ANTHROPIC_API_KEY=absent', 'GATEWAY_KEY=absent', 'ARGS=-p gateway-launcher-contract-smoke')
     foreach ($value in $expected) {
         if (-not $output.Contains($value)) { throw "PowerShell launcher contract check failed at $value. Output: $output" }
     }
