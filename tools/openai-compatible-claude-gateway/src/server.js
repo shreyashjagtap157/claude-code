@@ -97,7 +97,7 @@ function sendJson(response, status, body, requestId, extraHeaders = {}) {
 
 function anthropicClientModelList(config) {
   const ids = [...new Set([...Object.keys(config.modelMap), ...(config.defaultModel ? [config.defaultModel] : [])])];
-  const data = ids.map(id => ({ type: "model", id, display_name: id, created_at: "2026-01-01T00:00:00Z" }));
+  const data = ids.map(id => ({ type: "model", id, display_name: id, description: "Configured gateway model route" }));
   return { data, has_more: false, first_id: data[0]?.id ?? null, last_id: data.at(-1)?.id ?? null };
 }
 

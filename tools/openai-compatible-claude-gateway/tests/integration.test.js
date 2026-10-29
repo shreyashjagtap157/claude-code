@@ -15,7 +15,7 @@ test("HTTP end-to-end request translates Anthropic Messages to Chat Completions 
   const health = await fetch(`${state.url}/health`); assert.equal(health.status, 200); assert.deepEqual(await health.json(), { status: "ok" });
   const unauthenticated = await fetch(`${state.url}/v1/models`); assert.equal(unauthenticated.status, 401);
   const response = await fetch(`${state.url}/v1/messages`, { method: "POST", headers: { ...localAuthorization, "content-type": "application/json" }, body: JSON.stringify(basicBody({ system: "Be concise", temperature: 0.1 })) });
-  assert.equal(response.status, 200); const body = await response.json(); assert.equal(body.type, "message"); assert.equal(body.model, "claude-test-model"); assert.equal(body.content[0].text, "Hello from the fake upstream."); assert.equal(body.stop_reason, "end_turn"); assert.deepEqual(body.usage, { input_tokens: 10, output_tokens: 6 });
+  assert.equal(response.status, 200); const body = await response.json(); assert.equal(body.type, "message"); assert.match(body.id, /^msg_[a-f0-9]{32}$/); assert.equal(body.model, "claude-test-model"); assert.equal(body.content[0].text, "Hello from the fake upstream."); assert.equal(body.stop_reason, "end_turn"); assert.deepEqual(body.usage, { input_tokens: 10, output_tokens: 6 });
   assert.equal(state.requests.length, 1); assert.equal(state.requests[0].headers.authorization, "Bearer upstream-secret-fixture"); assert.equal(state.requests[0].headers.local, undefined); assert.equal(state.requests[0].body.model, "mapped-model"); assert.equal(state.requests[0].body.messages[0].content, "Be concise"); assert.equal(state.requests[0].body.messages[1].content, "Hello"); assert.equal(JSON.stringify(body).includes("upstream-secret-fixture"), false);
 });
 
@@ -34,7 +34,7 @@ test("streaming returns incremental Anthropic events and valid final usage/stop 
   const response = await fetch(`${state.url}/v1/messages`, { method: "POST", headers: { ...localAuthorization, "content-type": "application/json" }, body: JSON.stringify(basicBody({ stream: true })) });
   assert.equal(response.status, 200); assert.match(response.headers.get("content-type"), /text\/event-stream/); const raw = await response.text();
   const events = [...raw.matchAll(/event: ([^\n]+)\ndata: ([^\n]+)\n\n/g)].map(match => ({ event: match[1], data: JSON.parse(match[2]) }));
-  assert.equal(events[0].event, "message_start"); assert.ok(events.some(event => event.event === "content_block_start")); assert.equal(events.filter(event => event.event === "content_block_delta").map(event => event.data.delta.text || "").join(""), "Hello");
+  assert.equal(events[0].event, "message_start"); assert.ok(events.some(event => event.event === "ping"), "upstream keepalive is forwarded as an Anthropic ping"); assert.ok(events.some(event => event.event === "content_block_start")); assert.equal(events.filter(event => event.event === "content_block_delta").map(event => event.data.delta.text || "").join(""), "Hello");
   assert.equal(events.at(-2).event, "message_delta"); assert.equal(events.at(-2).data.delta.stop_reason, "end_turn"); assert.equal(events.at(-2).data.usage.input_tokens, 7); assert.equal(events.at(-1).event, "message_stop"); assert.equal(state.requests[0].body.stream_options.include_usage, true);
 });
 

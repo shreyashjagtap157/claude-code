@@ -48,7 +48,7 @@ export function translateChatCompletionResponse(upstream, clientModel) {
   const inputTokens = Number.isInteger(usage?.prompt_tokens) && usage.prompt_tokens >= 0 ? usage.prompt_tokens : 0;
   const outputTokens = Number.isInteger(usage?.completion_tokens) && usage.completion_tokens >= 0 ? usage.completion_tokens : 0;
   return {
-    id: typeof upstream.id === "string" && upstream.id ? upstream.id : `msg_${randomUUID().replaceAll("-", "")}`,
+    id: `msg_${randomUUID().replaceAll("-", "")}`,
     type: "message",
     role: "assistant",
     model: clientModel,

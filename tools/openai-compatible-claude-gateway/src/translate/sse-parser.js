@@ -61,7 +61,7 @@ export async function* parseSse(body, { idleTimeoutMs = 60_000, signal } = {}) {
           }
           continue;
         }
-        if (line.startsWith(":")) continue;
+        if (line.startsWith(":")) { yield { event: "ping", data: "" }; continue; } // preserve provider keepalives for the client stream
         const colon = line.indexOf(":");
         const field = colon < 0 ? line : line.slice(0, colon);
         let value = colon < 0 ? "" : line.slice(colon + 1);

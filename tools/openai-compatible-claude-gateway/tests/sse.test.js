@@ -10,7 +10,7 @@ function streamFromChunks(chunks) {
 test("incremental SSE parser handles arbitrary chunks, CRLF/LF, comments, multiple data lines and DONE", async () => {
   const input = [": keepalive\r", "\n", "event: message\r\ndata: {\"value\":\r", "\n", "data: \"ok\"}\r\n\r", "\ndata: [DONE]\r\n\r\n"];
   const events = []; for await (const event of parseSse(streamFromChunks(input))) events.push(event);
-  assert.deepEqual(events, [{ event: "message", data: '{"value":\n"ok"}' }, { event: "message", data: "[DONE]", done: true }]);
+  assert.deepEqual(events, [{ event: "ping", data: "" }, { event: "message", data: '{"value":\n"ok"}' }, { event: "message", data: "[DONE]", done: true }]);
 });
 
 test("SSE parser treats a clean EOF without DONE as EOF, so the stream protocol layer can reject it", async () => {

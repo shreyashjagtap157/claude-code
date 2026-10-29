@@ -43,7 +43,7 @@ In a second PowerShell terminal, from the same gateway directory, launch Claude 
 .\scripts\start-claude-with-openai-provider.ps1 -p "Say hello in one sentence."
 ```
 
-The wrapper checks `/health`, configures only the child Claude Code environment, and returns Claude Code's exit status. It does not edit shell profiles, persist environment variables, write Claude settings, or change `.env`. The wrapper reads `GATEWAY_PORT`, `GATEWAY_HOST`, and `GATEWAY_API_KEY` from process environment first, then the gateway `.env` file when those values are not set.
+The wrapper checks `/health`, configures only the child Claude Code environment, and returns Claude Code's exit status. It does not edit shell profiles, persist environment variables, write Claude settings, or change `.env`. The wrapper reads `GATEWAY_PORT`, `GATEWAY_HOST`, and `GATEWAY_API_KEY` from process environment first, then the gateway `.env` file when those values are not set. For compatibility with this schema-translating gateway it also sets `CLAUDE_CODE_ATTRIBUTION_HEADER=0` (the bridge reshapes system content), `CLAUDE_CODE_DISABLE_THINKING=1` (Anthropic thinking blocks have no generic mapping), and by default `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=1` (unless you set that variable yourself before launching). It sets `CLAUDE_CODE_EFFORT_LEVEL=auto` only when you have not set an effort level. This avoids sending unsupported Anthropic-only body fields by default; it does not disable the Auto Mode classifier or normal permission checks. Setting `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=0` opts beta features back in, but only do so for capabilities that the gateway has an explicit mapping for. To test configured OpenAI reasoning effort, set `CLAUDE_CODE_EFFORT_LEVEL=low`, `medium`, or `high` and configure `reasoningEffort=true` for the upstream model.
 
 POSIX shell equivalent:
 
@@ -206,7 +206,7 @@ A real `claude` CLI smoke test and Windows PowerShell execution depend on the ta
 Checked 29 October 2026:
 
 - [Claude Code gateway compatibility guide](https://code.claude.com/docs/en/llm-gateway-protocol) — Messages endpoints, startup probe, streaming event order, header/body pass-through, model discovery, and gateway feature behavior.
-- [Auto Mode classifier billing](https://code.claude.com/docs/en/auto-mode-classifier-billing) — eligibility warning, classifier request billing, and the `CLAUDE_CODE_AUTO_MODE_SERVER=0` opt-out.
+- [Auto Mode configuration](https://code.claude.com/docs/en/auto-mode-config) — eligibility and classifier behavior. [Environment variables](https://code.claude.com/docs/en/env-vars) — `CLAUDE_CODE_AUTO_MODE_SERVER`, attribution headers, thinking, beta, and effort compatibility settings.
 - [Claude Code environment variables](https://code.claude.com/docs/en/env-vars) — `ANTHROPIC_BASE_URL`, child environment configuration, and variable behavior.
 
 This adapter implements an independently developed protocol translation layer. It is not an official Anthropic gateway and does not modify Claude Code's closed runtime. Use of the surrounding repository remains subject to its own license terms.

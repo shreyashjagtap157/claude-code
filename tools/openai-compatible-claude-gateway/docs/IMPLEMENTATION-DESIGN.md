@@ -32,6 +32,8 @@ This document specifies the implemented bridge contract. It intentionally does n
 
 ## Response mapping
 
+Each non-streaming response uses a gateway-generated `msg_` identifier rather than leaking a provider-specific `chatcmpl_` ID to the Anthropic client.
+
 - `choices[0].message.content` text → Anthropic `text` block.
 - `message.tool_calls` → `tool_use` blocks; argument strings must parse as JSON objects.
 - `finish_reason=stop` → `end_turn`; `length` → `max_tokens`; tool-call completion → `tool_use`.
@@ -42,7 +44,7 @@ This document specifies the implemented bridge contract. It intentionally does n
 
 ## Stream mapping
 
-The parser accepts arbitrary byte chunks, CRLF/LF, multiple events per chunk, comments/keepalives, multiline data fields and `[DONE]`. Text deltas produce `content_block_start`/`content_block_delta`; each streamed function call is keyed by its upstream tool index and emitted as an Anthropic `tool_use` block with `input_json_delta` fragments. Function arguments are validated as a complete object before successful terminal events. The final sequence contains `content_block_stop` for every opened block, `message_delta` with a mapped stop reason/usage, then `message_stop`.
+The parser accepts arbitrary byte chunks, CRLF/LF, multiple events per chunk, comments/keepalives, multiline data fields and `[DONE]`. Upstream comments/keepalive events are translated to Anthropic `ping` events so they continue to count as stream activity at the client. Text deltas produce `content_block_start`/`content_block_delta`; each streamed function call is keyed by its upstream tool index and emitted as an Anthropic `tool_use` block with `input_json_delta` fragments. Function arguments are validated as a complete object before successful terminal events. The final sequence contains `content_block_stop` for every opened block, `message_delta` with a mapped stop reason/usage, then `message_stop`.
 
 An upstream error before the gateway sends response headers returns a JSON Anthropic error with an appropriate status. After SSE headers have been sent, the adapter emits an Anthropic-shaped `event: error` and ends the stream instead of writing a second JSON response. It does not retry inference. `[DONE]` is required by default; an operator may disable that requirement only after verifying a provider that uses a documented different termination contract.
 

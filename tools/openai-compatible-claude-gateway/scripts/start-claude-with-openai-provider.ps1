@@ -44,6 +44,7 @@ if (-not $command -and -not (Test-Path -LiteralPath $claudeCommand -PathType Lea
 # Save and restore the caller's process environment after the child exits. Never persist values to a profile.
 $names = @(
     'ANTHROPIC_BASE_URL', 'ANTHROPIC_API_KEY', 'ANTHROPIC_AUTH_TOKEN', 'CLAUDE_CODE_AUTO_MODE_SERVER',
+    'CLAUDE_CODE_ATTRIBUTION_HEADER', 'CLAUDE_CODE_DISABLE_THINKING', 'CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS', 'CLAUDE_CODE_EFFORT_LEVEL',
     'OPENAI_COMPATIBLE_API_KEY', 'OPENAI_COMPATIBLE_BASE_URL', 'OPENAI_COMPATIBLE_MODEL',
     'OPENAI_COMPATIBLE_MODEL_MAP', 'OPENAI_COMPATIBLE_CHAT_COMPLETIONS_PATH', 'OPENAI_COMPATIBLE_CAPABILITIES',
     'OPENAI_COMPATIBLE_ALLOW_INSECURE_HTTP', 'GATEWAY_API_KEY'
@@ -53,6 +54,10 @@ foreach ($name in $names) { $old[$name] = [Environment]::GetEnvironmentVariable(
 try {
     $env:ANTHROPIC_BASE_URL = $baseUrl
     $env:CLAUDE_CODE_AUTO_MODE_SERVER = '0'
+    $env:CLAUDE_CODE_ATTRIBUTION_HEADER = '0'
+    $env:CLAUDE_CODE_DISABLE_THINKING = '1'
+    if ([string]::IsNullOrEmpty($old['CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS'])) { $env:CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS = '1' }
+    if ([string]::IsNullOrEmpty($old['CLAUDE_CODE_EFFORT_LEVEL'])) { $env:CLAUDE_CODE_EFFORT_LEVEL = 'auto' }
     Remove-Item Env:ANTHROPIC_API_KEY -ErrorAction SilentlyContinue
     Remove-Item Env:OPENAI_COMPATIBLE_API_KEY -ErrorAction SilentlyContinue
     Remove-Item Env:OPENAI_COMPATIBLE_BASE_URL -ErrorAction SilentlyContinue

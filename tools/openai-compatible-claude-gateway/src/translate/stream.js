@@ -61,6 +61,7 @@ export async function streamChatCompletion(upstreamResponse, { clientModel, stre
   };
 
   for await (const event of parseSse(upstreamResponse.body, { idleTimeoutMs: streamIdleTimeoutMs, signal })) {
+    if (event.event === "ping") { await writeSse(response, "ping", { type: "ping" }); continue; }
     const currentEventIndex = upstreamEventIndex++;
     if (event.done || event.data === "[DONE]") { sawDone = true; break; }
     if (event.event === "error") throw new UpstreamProtocolError("Upstream emitted an SSE error event; inspect the provider's redacted server-side diagnostics.");
