@@ -2,9 +2,20 @@ import { randomUUID } from "node:crypto";
 import { UpstreamProtocolError } from "../errors.js";
 
 function stopReason(finishReason, hasToolCalls) {
-  if (hasToolCalls || finishReason === "tool_calls" || finishReason === "function_call") return "tool_use";
+  if (finishReason === "content_filter") {
+    throw new UpstreamProtocolError("Upstream finish_reason \"content_filter\" indicates provider-side filtering; the gateway does not map it to an Anthropic safety verdict.");
+  }
   if (finishReason === "length" || finishReason === "max_tokens") return "max_tokens";
-  return "end_turn";
+  if (finishReason === "stop") return hasToolCalls ? "tool_use" : "end_turn";
+  if (finishReason === "tool_calls") {
+    if (!hasToolCalls) throw new UpstreamProtocolError("Upstream reported finish_reason \"tool_calls\" but did not include tool_calls.");
+    return "tool_use";
+  }
+  if (finishReason === "function_call") {
+    if (hasToolCalls) return "tool_use";
+    throw new UpstreamProtocolError("Upstream reported legacy finish_reason \"function_call\" without stable tool-call IDs; this response cannot be represented faithfully.");
+  }
+  throw new UpstreamProtocolError(`Unsupported or missing upstream finish_reason ${JSON.stringify(finishReason)}; expected stop, length, or tool_calls.`);
 }
 
 function contentText(content) {

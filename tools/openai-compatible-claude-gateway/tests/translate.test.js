@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { loadConfig } from "../src/config.js";
 import { translateAnthropicRequest } from "../src/translate/request.js";
-import { translateChatCompletionResponse } from "../src/translate/response.js";
+import { translateChatCompletionResponse, mapFinishReason } from "../src/translate/response.js";
 import { GatewayError, UpstreamProtocolError } from "../src/errors.js";
 
 const baseEnv = { OPENAI_COMPATIBLE_BASE_URL: "http://127.0.0.1:8000/v1", OPENAI_COMPATIBLE_MODEL: "test-upstream-model", OPENAI_COMPATIBLE_MODEL_MAP: '{"claude-test":"mapped-model"}', OPENAI_COMPATIBLE_CAPABILITIES: JSON.stringify({ toolCalling: true, parallelToolCalls: true, images: true, jsonSchema: true, reasoningEffort: true }) };
@@ -102,4 +102,17 @@ test("translator negotiates vision capability independently for model aliases", 
   assert.equal(vision.capabilities.toolCalling, true);
   const textRequest = request({ model: "claude-text", messages: [{ role: "user", content: [{ type: "image", source: { type: "base64", media_type: "image/png", data: "aGVsbG8=" } }] }] });
   assert.throws(() => translateAnthropicRequest(textRequest, perModel), /images are disabled/);
+});
+
+
+test("finish reasons are mapped explicitly and unsupported provider reasons fail closed", () => {
+  assert.equal(mapFinishReason("stop", false), "end_turn");
+  assert.equal(mapFinishReason("stop", true), "tool_use");
+  assert.equal(mapFinishReason("length", false), "max_tokens");
+  assert.equal(mapFinishReason("tool_calls", true), "tool_use");
+  assert.throws(() => mapFinishReason("tool_calls", false), /did not include tool_calls/);
+  assert.throws(() => mapFinishReason("content_filter", false), /does not map it to an Anthropic safety verdict/);
+  assert.throws(() => mapFinishReason("provider_magic", false), /Unsupported or missing upstream finish_reason/);
+  assert.throws(() => mapFinishReason(null, false), /Unsupported or missing upstream finish_reason/);
+  assert.throws(() => mapFinishReason("function_call", false), /without stable tool-call IDs/);
 });
