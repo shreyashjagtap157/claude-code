@@ -29,7 +29,7 @@ test("server reports an occupied port and leaves the existing listener running",
   const stillListening = await fetch(`http://127.0.0.1:${port}/`); assert.equal(stillListening.status, 200); assert.equal(await stillListening.text(), "still-running");
 });
 
-test("POSIX launcher builds isolated child environment and selects the local classifier path", async t => {
+test("POSIX launcher builds isolated child environment and selects the local classifier path", { skip: process.platform === "win32" ? "POSIX shell launcher test" : false }, async t => {
   const healthServer = http.createServer((_request, response) => { response.writeHead(200, { "content-type": "application/json" }); response.end('{"status":"ok"}'); }); const port = await listen(healthServer); t.after(() => close(healthServer));
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "claude-gateway-launcher-test-")); t.after(() => fs.rmSync(tempDir, { recursive: true, force: true }));
   const fakeCli = path.join(tempDir, "fake-claude.sh"); fs.writeFileSync(fakeCli, '#!/bin/sh\nprintf "base=%s\\nlocal=%s\\nserver=%s\\nattribution=%s\\nthinking=%s\\nbetas=%s\\neffort=%s\\nupstream=%s\\nanthropic_api=%s\\ngateway=%s\\n" "${ANTHROPIC_BASE_URL-unset}" "${ANTHROPIC_AUTH_TOKEN-unset}" "${CLAUDE_CODE_AUTO_MODE_SERVER-unset}" "${CLAUDE_CODE_ATTRIBUTION_HEADER-unset}" "${CLAUDE_CODE_DISABLE_THINKING-unset}" "${CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS-unset}" "${CLAUDE_CODE_EFFORT_LEVEL-unset}" "${OPENAI_COMPATIBLE_API_KEY-unset}" "${ANTHROPIC_API_KEY-unset}" "${GATEWAY_API_KEY-unset}"\n', { mode: 0o755 });

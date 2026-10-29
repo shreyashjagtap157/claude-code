@@ -59,3 +59,15 @@ test("process environment wins over .env values without mutating supplied enviro
   const incoming = envFor("https://shell.example/v1", { OPENAI_COMPATIBLE_MODEL: "shell-model" }); const copy = { ...incoming };
   const cfg = loadConfig({ env: incoming, cwd: "/no-env" }); assert.equal(cfg.defaultModel, "shell-model"); assert.deepEqual(incoming, copy);
 });
+
+
+test("dedicated max-token field override validates and takes precedence over capability JSON", () => {
+  const cfg = loadConfig({ env: envFor("https://provider.example/v1", {
+    OPENAI_COMPATIBLE_CAPABILITIES: '{"maxTokensField":"max_tokens"}',
+    OPENAI_COMPATIBLE_MAX_TOKENS_FIELD: "max_completion_tokens"
+  }), cwd: "/no-env" });
+  assert.equal(cfg.capabilities.maxTokensField, "max_completion_tokens");
+  assert.throws(() => loadConfig({ env: envFor("https://provider.example/v1", {
+    OPENAI_COMPATIBLE_MAX_TOKENS_FIELD: "max_new_tokens"
+  }), cwd: "/no-env" }), /OPENAI_COMPATIBLE_MAX_TOKENS_FIELD must be max_tokens or max_completion_tokens/);
+});

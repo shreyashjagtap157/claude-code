@@ -4,6 +4,7 @@ export function createClaudeChildEnvironment(parentEnv, { gatewayBaseUrl, gatewa
   // Never let provider credentials/configuration enter the Claude Code process by inheritance.
   for (const key of [
     "OPENAI_COMPATIBLE_API_KEY", "OPENAI_COMPATIBLE_BASE_URL", "OPENAI_COMPATIBLE_MODEL",
+    "OPENAI_COMPATIBLE_MAX_TOKENS_FIELD", "OPENAI_COMPATIBLE_MODEL_PASSTHROUGH",
     "OPENAI_COMPATIBLE_MODEL_MAP", "OPENAI_COMPATIBLE_CHAT_COMPLETIONS_PATH",
     "OPENAI_COMPATIBLE_CAPABILITIES", "OPENAI_COMPATIBLE_ALLOW_INSECURE_HTTP",
     "GATEWAY_API_KEY", "GATEWAY_CONFIG_FILE", "GATEWAY_ENV_FILE"

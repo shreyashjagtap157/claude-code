@@ -148,7 +148,15 @@ export function loadConfig({ env = process.env, cwd = process.cwd() } = {}) {
   const logLevel = String(merged.GATEWAY_LOG_LEVEL || "info").toLowerCase();
   if (!["debug", "info", "warn", "error", "silent"].includes(logLevel)) throw new ConfigError("GATEWAY_LOG_LEVEL must be debug, info, warn, error, or silent.");
   const capabilitiesValue = parseJson(merged.OPENAI_COMPATIBLE_CAPABILITIES, "OPENAI_COMPATIBLE_CAPABILITIES", {});
-  const capabilities = validateCapabilities(capabilitiesValue);
+  let capabilities = validateCapabilities(capabilitiesValue);
+  // The dedicated field is an explicit environment-level override for easier provider setup.
+  if (merged.OPENAI_COMPATIBLE_MAX_TOKENS_FIELD !== undefined && String(merged.OPENAI_COMPATIBLE_MAX_TOKENS_FIELD).trim() !== "") {
+    const maxTokensField = String(merged.OPENAI_COMPATIBLE_MAX_TOKENS_FIELD).trim();
+    if (!["max_tokens", "max_completion_tokens"].includes(maxTokensField)) {
+      throw new ConfigError("OPENAI_COMPATIBLE_MAX_TOKENS_FIELD must be max_tokens or max_completion_tokens.");
+    }
+    capabilities = Object.freeze({ ...capabilities, maxTokensField });
+  }
 
   return Object.freeze({
     host, port, gatewayApiKey, allowRemote,

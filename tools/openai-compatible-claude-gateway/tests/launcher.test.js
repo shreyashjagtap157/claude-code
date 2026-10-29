@@ -10,7 +10,7 @@ test("launcher child environment isolates upstream credentials, selects local to
   assert.equal(child.CLAUDE_CODE_DISABLE_THINKING, "1");
   assert.equal(child.CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS, "1");
   assert.equal(child.CLAUDE_CODE_EFFORT_LEVEL, "auto");
-  assert.equal(child.ANTHROPIC_API_KEY, undefined); assert.equal(child.OPENAI_COMPATIBLE_API_KEY, undefined); assert.equal(child.OPENAI_COMPATIBLE_BASE_URL, undefined); assert.equal(child.GATEWAY_API_KEY, undefined); assert.equal(child.OTHER_SETTING, "unchanged"); assert.deepEqual(parent, before);
+  assert.equal(child.ANTHROPIC_API_KEY, undefined); assert.equal(child.OPENAI_COMPATIBLE_API_KEY, undefined); assert.equal(child.OPENAI_COMPATIBLE_BASE_URL, undefined); assert.equal(child.OPENAI_COMPATIBLE_MAX_TOKENS_FIELD, undefined); assert.equal(child.OPENAI_COMPATIBLE_MODEL_PASSTHROUGH, undefined); assert.equal(child.GATEWAY_API_KEY, undefined); assert.equal(child.OTHER_SETTING, "unchanged"); assert.deepEqual(parent, before);
 });
 
 test("launcher does not invent a local credential when none is configured", () => {

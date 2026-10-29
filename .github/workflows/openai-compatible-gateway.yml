@@ -1,0 +1,111 @@
+name: OpenAI-compatible gateway conformance
+
+on:
+  push:
+    branches:
+      - feat/openai-compatible-chat-completions-gateway
+    paths:
+      - "tools/openai-compatible-claude-gateway/**"
+      - ".github/workflows/openai-compatible-gateway.yml"
+  pull_request:
+    paths:
+      - "tools/openai-compatible-claude-gateway/**"
+      - ".github/workflows/openai-compatible-gateway.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: openai-compatible-gateway
+  cancel-in-progress: false
+
+jobs:
+  linux:
+    name: Linux checks and packed-install conformance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout feature branch and history for whitespace checks
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Record runtime versions
+        run: |
+          node --version
+          npm --version
+          git --version
+
+      - name: Check whitespace and ensure runtime source has no scaffold markers
+        run: |
+          git diff --check origin/main...HEAD
+          if grep -R -n -E 'TODO|NotImplementedError|throw new Error\("not implemented"\)' tools/openai-compatible-claude-gateway/src; then
+            echo "Runtime scaffold markers found."
+            exit 1
+          fi
+
+      - name: JavaScript syntax check
+        working-directory: tools/openai-compatible-claude-gateway
+        run: npm run check
+
+      - name: Full deterministic test suite
+        working-directory: tools/openai-compatible-claude-gateway
+        run: npm test
+
+      - name: HTTP and streaming smoke tests
+        working-directory: tools/openai-compatible-claude-gateway
+        run: npm run smoke
+
+      - name: POSIX launcher syntax
+        working-directory: tools/openai-compatible-claude-gateway
+        run: sh -n scripts/start-claude-with-openai-provider.sh
+
+      - name: Pack the gateway
+        working-directory: tools/openai-compatible-claude-gateway
+        run: npm pack --pack-destination "$RUNNER_TEMP"
+
+      - name: Install and validate the packed artifact in an isolated directory
+        working-directory: tools/openai-compatible-claude-gateway
+        shell: bash
+        run: |
+          set -euo pipefail
+          tarball="$(find "$RUNNER_TEMP" -maxdepth 1 -name 'openai-compatible-claude-gateway-*.tgz' -print -quit)"
+          test -n "$tarball"
+          install_root="$RUNNER_TEMP/gateway-installed"
+          npm install --prefix "$install_root" --no-audit --no-fund "$tarball"
+          cd "$install_root/node_modules/openai-compatible-claude-gateway"
+          test -f src/main.js
+          npm run check
+          npm test
+          npm run smoke
+          npm pack --dry-run
+
+  windows:
+    name: Windows tests and PowerShell launcher integration
+    runs-on: windows-latest
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: JavaScript syntax check
+        working-directory: tools/openai-compatible-claude-gateway
+        run: npm run check
+
+      - name: Full deterministic test suite
+        working-directory: tools/openai-compatible-claude-gateway
+        run: npm test
+
+      - name: Parse and execute PowerShell wrapper using a fake health server and fake CLI
+        working-directory: tools/openai-compatible-claude-gateway
+        shell: pwsh
+        run: ./tests/windows-launcher-smoke.ps1

@@ -131,7 +131,7 @@ Generic Chat Completions cannot be assumed to preserve Anthropic extended thinki
 | Vision/images | Supports base64/data URLs and credential-free HTTP(S) image URLs | Set `images=true` only after validating model and endpoint support, including image-bearing tool results. |
 | Structured JSON Schema | Maps Anthropic `output_config.format` to Chat Completions `response_format.json_schema` | Set `jsonSchema=true` only after validating the exact schema dialect/strict behavior. |
 | Reasoning metadata / effort | Maps only explicit `low`, `medium`, `high` effort to `reasoning_effort` | Set `reasoningEffort=true` only after validating that provider-specific mapping. Anthropic extended thinking is rejected. |
-| `max_tokens` vs `max_completion_tokens` | Configurable via `capabilities.maxTokensField` | Choose the field supported by the configured API/model. |
+| `max_tokens` vs `max_completion_tokens` | Configurable via `OPENAI_COMPATIBLE_MAX_TOKENS_FIELD` or `capabilities.maxTokensField` | Choose the field supported by the configured API/model. |
 | Temperature, top-p, stop sequences | Translated only if corresponding capability flag is enabled | Validate constraints for the provider/model. |
 | Exact token count | Not implemented; no fabricated token totals | Claude Code should use its documented estimate fallback. |
 | Anthropic server-side Auto Mode classifier | **Not supported by generic Chat Completions.** No safety verdicts are fabricated. | Use the supported launcher to select the local classifier path. Do not opt into server checks without independently proven upstream support. |
@@ -185,7 +185,7 @@ npm run smoke
 npm pack --dry-run
 ```
 
-`npm run check` syntax-checks all `.js`/`.mjs` runtime, script and test files. There is intentionally no external linter/type-checker or compilation step: the implementation is dependency-free JavaScript, not TypeScript. `npm test` exercises config, request/response conversion, SSE chunking, credential separation, authentication, the HTTP integration path, and multi-turn tool use against a deterministic local fake upstream. `npm run smoke` runs the real HTTP integration subset. None of these commands contacts a hosted provider or makes billable model calls.
+`npm run check` syntax-checks all `.js`/`.mjs` runtime, script and test files. Repository CI also installs the generated npm tarball into an isolated temporary prefix and repeats the checks and tests from the installed package. There is intentionally no external linter/type-checker or compilation step: the implementation is dependency-free JavaScript, not TypeScript. `npm test` exercises config, request/response conversion, SSE chunking, credential separation, authentication, the HTTP integration path, and multi-turn tool use against a deterministic local fake upstream. `npm run smoke` runs the real HTTP integration subset. None of these commands contacts a hosted provider or makes billable model calls.
 
 A real `claude` CLI smoke test and Windows PowerShell execution depend on the target machine having the actual CLI and PowerShell installed. A deterministic fake upstream verifies the gateway protocol independently of any paid provider.
 
