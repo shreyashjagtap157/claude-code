@@ -66,7 +66,7 @@ exit /b 0
         "`$env:OPENAI_COMPATIBLE_MODEL_CAPABILITIES = 'private-model-capability-config'",
         "`$env:GATEWAY_ENV_FILE = 'private-env-path'",
         "`$env:GATEWAY_CONFIG_FILE = 'private-config-path'",
-        "`$env:GATEWAY_BASE_URL = 'http://gateway-target-fixture'",
+        "`$env:GATEWAY_BASE_URL = 'http://127.0.0.1:$port'",
         "`$env:GATEWAY_HOST = '0.0.0.0'",
         "`$env:GATEWAY_PORT = '9999'",
         "`$env:GATEWAY_MAX_OUTPUT_TOKENS = '77'",
